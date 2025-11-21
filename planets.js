@@ -7,49 +7,49 @@ const MOON_DISTANCE_SCALE = 50;
 const JOVIAN_MOON_SCALE = 100;
 
 const planetData = [
-    { name: "Mercury", body: "Mercury", radius: 0.38, color: 0xaaaaaa, period: 88 },
-    { name: "Venus", body: "Venus", radius: 0.95, color: 0xffcc00, period: 225 },
+    { name: "Mercury", body: "Mercury", radius: 0.38, color: 0xaaaaaa, period: 88, texture: "/assets/textures/mercury.jpg", rotationPeriod: 1408, axialTilt: 0.01 },
+    { name: "Venus", body: "Venus", radius: 0.95, color: 0xffcc00, period: 225, texture: "/assets/textures/venus.jpg", rotationPeriod: 5832, axialTilt: 177.4 },
     {
-        name: "Earth", body: "Earth", radius: 1, color: 0x2233ff, period: 365.25, moons: [
-            { name: "Moon", body: "Moon", radius: 0.27, color: 0x888888, type: "real", period: 27.3 }
+        name: "Earth", body: "Earth", radius: 1, color: 0x2233ff, period: 365.25, texture: "/assets/textures/earth.jpg", rotationPeriod: 24, axialTilt: 23.4, moons: [
+            { name: "Moon", body: "Moon", radius: 0.27, color: 0x888888, type: "real", period: 27.3, texture: "/assets/textures/moon.jpg", rotationPeriod: 655.7, axialTilt: 6.7 }
         ]
     },
-    { name: "Mars", body: "Mars", radius: 0.53, color: 0xff4400, period: 687 },
+    { name: "Mars", body: "Mars", radius: 0.53, color: 0xff4400, period: 687, texture: "/assets/textures/mars.jpg", rotationPeriod: 24.6, axialTilt: 25.2 },
     {
-        name: "Jupiter", body: "Jupiter", radius: 11, color: 0xd2b48c, period: 4333, moons: [
-            { name: "Io", radius: 0.28, color: 0xffff00, type: "jovian", moonIndex: 0, period: 1.77 },
-            { name: "Europa", radius: 0.24, color: 0xffffff, type: "jovian", moonIndex: 1, period: 3.55 },
-            { name: "Ganymede", radius: 0.41, color: 0xdddddd, type: "jovian", moonIndex: 2, period: 7.15 },
-            { name: "Callisto", radius: 0.37, color: 0xaaaaaa, type: "jovian", moonIndex: 3, period: 16.7 }
+        name: "Jupiter", body: "Jupiter", radius: 11, color: 0xd2b48c, period: 4333, texture: "/assets/textures/jupiter.jpg", rotationPeriod: 9.9, axialTilt: 3.1, moons: [
+            { name: "Io", radius: 0.28, color: 0xffff00, type: "jovian", moonIndex: 0, period: 1.77, texture: "/assets/textures/io.png", rotationPeriod: 42.5, axialTilt: 0 },
+            { name: "Europa", radius: 0.24, color: 0xffffff, type: "jovian", moonIndex: 1, period: 3.55, texture: "/assets/textures/europa.png", rotationPeriod: 85.2, axialTilt: 0 },
+            { name: "Ganymede", radius: 0.41, color: 0xdddddd, type: "jovian", moonIndex: 2, period: 7.15, texture: "/assets/textures/ganymede.png", rotationPeriod: 171.7, axialTilt: 0 },
+            { name: "Callisto", radius: 0.37, color: 0xaaaaaa, type: "jovian", moonIndex: 3, period: 16.7, texture: "/assets/textures/callisto.png", rotationPeriod: 400.5, axialTilt: 0 }
         ]
     },
     {
-        name: "Saturn", body: "Saturn", radius: 9, color: 0xeebb88, period: 10759, ring: { inner: 11, outer: 18, color: 0xaa8866 }, moons: [
-            { name: "Titan", radius: 0.4, distance: 20, color: 0xffaa00, type: "simple", period: 15.95 }
+        name: "Saturn", body: "Saturn", radius: 9, color: 0xeebb88, period: 10759, texture: "/assets/textures/saturn.jpg", rotationPeriod: 10.7, axialTilt: 26.7, ring: { inner: 11, outer: 18, color: 0xaa8866, texture: "/assets/textures/saturn_ring.png" }, moons: [
+            { name: "Titan", radius: 0.4, distance: 20, color: 0xffaa00, type: "simple", period: 15.95, texture: "/assets/textures/titan.png", rotationPeriod: 382.7, axialTilt: 0 }
         ]
     },
-    { name: "Uranus", body: "Uranus", radius: 4, color: 0x4fd0e7, period: 30687 },
-    { name: "Neptune", body: "Neptune", radius: 3.9, color: 0x4b70dd, period: 60190 }
+    { name: "Uranus", body: "Uranus", radius: 4, color: 0x4fd0e7, period: 30687, texture: "/assets/textures/uranus.jpg", rotationPeriod: 17.2, axialTilt: 97.8 },
+    { name: "Neptune", body: "Neptune", radius: 3.9, color: 0x4b70dd, period: 60190, texture: "/assets/textures/neptune.jpg", rotationPeriod: 16.1, axialTilt: 28.3 }
 ];
 
 const dwarfPlanetData = [
     {
-        name: "Ceres", type: "dwarf", radius: 0.07, color: 0xaaaaaa, period: 1682,
+        name: "Ceres", type: "dwarf", radius: 0.07, color: 0xaaaaaa, period: 1682, texture: "/assets/textures/ceres.jpg", rotationPeriod: 9.1, axialTilt: 4,
         elements: { a: 2.767, e: 0.079, i: 10.59, Omega: 80.33, w: 73.51, M: 77.37 }
     },
     {
-        name: "Pluto", type: "dwarf", body: "Pluto", radius: 0.18, color: 0xddaa88, period: 90560
+        name: "Pluto", type: "dwarf", body: "Pluto", radius: 0.18, color: 0xddaa88, period: 90560, texture: "/assets/textures/pluto.png", rotationPeriod: 153.3, axialTilt: 122.5
     },
     {
-        name: "Haumea", type: "dwarf", radius: 0.13, color: 0xeeeeee, period: 103468,
+        name: "Haumea", type: "dwarf", radius: 0.13, color: 0xeeeeee, period: 103468, texture: "/assets/textures/haumea.png", rotationPeriod: 3.9, axialTilt: 0,
         elements: { a: 43.18, e: 0.195, i: 28.21, Omega: 122.16, w: 238.78, M: 219.87 }
     },
     {
-        name: "Makemake", type: "dwarf", radius: 0.11, color: 0xddbb99, period: 112897,
+        name: "Makemake", type: "dwarf", radius: 0.11, color: 0xddbb99, period: 112897, texture: "/assets/textures/makemake.jpg", rotationPeriod: 22.5, axialTilt: 0,
         elements: { a: 45.43, e: 0.161, i: 28.98, Omega: 79.62, w: 294.84, M: 200.0 }
     },
     {
-        name: "Eris", type: "dwarf", radius: 0.18, color: 0xffffff, period: 203830,
+        name: "Eris", type: "dwarf", radius: 0.18, color: 0xffffff, period: 203830, texture: "/assets/textures/eris.jpg", rotationPeriod: 25.9, axialTilt: 0,
         elements: { a: 67.86, e: 0.436, i: 44.04, Omega: 35.95, w: 151.64, M: 200.0 }
     }
 ];
@@ -112,10 +112,12 @@ function calculateKeplerianPosition(elements, date) {
 export function createPlanets(scene, orbitGroup) {
     const planets = [];
     const dwarfPlanets = []; // Separate array for toggling
+    const textureLoader = new THREE.TextureLoader();
 
     // Sun
     const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
-    const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    const sunTexture = textureLoader.load('/assets/textures/sun.jpg');
+    const sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture });
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     scene.add(sun);
 
@@ -127,12 +129,27 @@ export function createPlanets(scene, orbitGroup) {
         scene.add(planetGroup); // Add the group to the scene
 
         const geometry = new THREE.SphereGeometry(data.radius, 32, 32);
-        const material = new THREE.MeshStandardMaterial({ color: data.color });
+        let material;
+        if (data.texture) {
+            const texture = textureLoader.load(data.texture, undefined, undefined, () => {
+                // Fallback to color if texture fails
+                material.color.setHex(data.color);
+            });
+            material = new THREE.MeshStandardMaterial({ map: texture, color: 0xffffff });
+        } else {
+            material = new THREE.MeshStandardMaterial({ color: data.color });
+        }
         const mesh = new THREE.Mesh(geometry, material);
         planetGroup.add(mesh); // Mesh is added to planetGroup
 
         // Apply initial scale
         mesh.scale.setScalar(config.planetScale);
+
+        // Apply axial tilt if specified
+        if (data.axialTilt !== undefined) {
+            const tiltRadians = (data.axialTilt * Math.PI) / 180;
+            mesh.rotation.z = tiltRadians;
+        }
 
         // Create a non-rotating group for moon orbit lines
         const orbitLinesGroup = new THREE.Group();
@@ -140,7 +157,13 @@ export function createPlanets(scene, orbitGroup) {
 
         if (data.ring) {
             const ringGeo = new THREE.RingGeometry(data.ring.inner, data.ring.outer, 64);
-            const ringMat = new THREE.MeshStandardMaterial({ color: data.ring.color, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+            let ringMat;
+            if (data.ring.texture) {
+                const ringTexture = textureLoader.load(data.ring.texture);
+                ringMat = new THREE.MeshStandardMaterial({ map: ringTexture, side: THREE.DoubleSide, transparent: true, opacity: 1.0 });
+            } else {
+                ringMat = new THREE.MeshStandardMaterial({ color: data.ring.color, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+            }
             const ring = new THREE.Mesh(ringGeo, ringMat);
             ring.rotation.x = Math.PI / 2;
             mesh.add(ring);
@@ -176,11 +199,25 @@ export function createPlanets(scene, orbitGroup) {
         if (data.moons) {
             data.moons.forEach(moonData => {
                 const moonGeo = new THREE.SphereGeometry(moonData.radius, 16, 16);
-                const moonMat = new THREE.MeshStandardMaterial({ color: moonData.color });
+                let moonMat;
+                if (moonData.texture) {
+                    const moonTexture = textureLoader.load(moonData.texture, undefined, undefined, () => {
+                        moonMat.color.setHex(moonData.color);
+                    });
+                    moonMat = new THREE.MeshStandardMaterial({ map: moonTexture, color: 0xffffff });
+                } else {
+                    moonMat = new THREE.MeshStandardMaterial({ color: moonData.color });
+                }
                 const moonMesh = new THREE.Mesh(moonGeo, moonMat);
 
                 // Apply initial scale
                 moonMesh.scale.setScalar(config.planetScale);
+
+                // Apply axial tilt if specified
+                if (moonData.axialTilt !== undefined) {
+                    const tiltRadians = (moonData.axialTilt * Math.PI) / 180;
+                    moonMesh.rotation.z = tiltRadians;
+                }
 
                 if (moonData.type === "jovian") {
                     // Jupiter's Galilean moons - add to planetGroup to avoid rotation
@@ -277,9 +314,14 @@ export function updatePlanets(planets) {
         }
 
         if (p.mesh) {
-            // Only rotate planet if not paused
-            if (!config.stop) {
-                p.mesh.rotation.y += 0.01;
+            // Calculate rotation based on simulation time
+            if (!config.stop && p.data.rotationPeriod) {
+                // Rotation speed in radians per hour
+                const rotationSpeed = (2 * Math.PI) / p.data.rotationPeriod;
+                // Delta time in hours (config.simulationSpeed is in seconds per second)
+                const deltaHours = (config.simulationSpeed / 3600);
+                // Apply rotation around the tilted axis (y-axis in local space)
+                p.mesh.rotation.y += rotationSpeed * deltaHours;
             }
             // Position orbit lines group to match planet (no rotation)
             if (p.orbitLinesGroup) {
@@ -339,6 +381,13 @@ export function updatePlanets(planets) {
                 m.mesh.position.x = p.mesh.position.x + (xOffset * expansionFactor);
                 m.mesh.position.z = p.mesh.position.z + (zOffset * expansionFactor);
                 m.mesh.position.y = p.mesh.position.y + (yOffset * expansionFactor);
+
+                // Calculate moon rotation based on simulation time
+                if (!config.stop && m.data.rotationPeriod) {
+                    const rotationSpeed = (2 * Math.PI) / m.data.rotationPeriod;
+                    const deltaHours = (config.simulationSpeed / 3600);
+                    m.mesh.rotation.y += rotationSpeed * deltaHours;
+                }
             });
         }
     });
