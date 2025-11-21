@@ -179,21 +179,41 @@ export function updatePlanets(planets) {
             }
         }
 
+        // Dynamic Orbit Scaling
+        // Prevent planet from consuming moons by expanding orbits if planet gets too big
+        let expansionFactor = 1;
+        if (p.moons.length > 0) {
+            let baseMinDistance = 1000;
+            if (p.data.name === 'Jupiter') baseMinDistance = 14; // Io distance approx
+            else if (p.data.name === 'Saturn') baseMinDistance = 20; // Titan distance
+            else if (p.data.name === 'Earth') baseMinDistance = 6.4; // Moon distance approx
+
+            const currentRadius = p.data.radius * config.planetScale;
+            const requiredDistance = currentRadius * 1.1; // 10% padding
+            expansionFactor = Math.max(1, requiredDistance / baseMinDistance);
+
+            if (p.orbitLinesGroup) {
+                p.orbitLinesGroup.scale.setScalar(expansionFactor);
+            }
+        }
+
         p.moons.forEach(m => {
+            let xOffset, yOffset, zOffset;
+
             if (m.data.type === "jovian") {
                 // Jupiter's Galilean moons - world position (planet pos + moon offset)
                 const jm = Astronomy.JupiterMoons(config.date);
                 const moonState = [jm.io, jm.europa, jm.ganymede, jm.callisto][m.data.moonIndex];
 
-                m.mesh.position.x = p.mesh.position.x + (moonState.x * AU_TO_SCENE * JOVIAN_MOON_SCALE);
-                m.mesh.position.z = p.mesh.position.z + (-moonState.y * AU_TO_SCENE * JOVIAN_MOON_SCALE);
-                m.mesh.position.y = p.mesh.position.y + (moonState.z * AU_TO_SCENE * JOVIAN_MOON_SCALE);
+                xOffset = moonState.x * AU_TO_SCENE * JOVIAN_MOON_SCALE;
+                zOffset = -moonState.y * AU_TO_SCENE * JOVIAN_MOON_SCALE;
+                yOffset = moonState.z * AU_TO_SCENE * JOVIAN_MOON_SCALE;
             } else if (m.data.type === "real") {
                 // Earth's Moon - world position (planet pos + moon offset)
                 const moonVector = Astronomy.GeoVector(Astronomy.Body[m.data.body], config.date, true);
-                m.mesh.position.x = p.mesh.position.x + (moonVector.x * AU_TO_SCENE * MOON_DISTANCE_SCALE);
-                m.mesh.position.z = p.mesh.position.z + (-moonVector.y * AU_TO_SCENE * MOON_DISTANCE_SCALE);
-                m.mesh.position.y = p.mesh.position.y + (moonVector.z * AU_TO_SCENE * MOON_DISTANCE_SCALE);
+                xOffset = moonVector.x * AU_TO_SCENE * MOON_DISTANCE_SCALE;
+                zOffset = -moonVector.y * AU_TO_SCENE * MOON_DISTANCE_SCALE;
+                yOffset = moonVector.z * AU_TO_SCENE * MOON_DISTANCE_SCALE;
             } else {
                 // Simple moons (Titan) - world position (planet pos + moon offset)
                 const epoch = new Date(2000, 0, 1).getTime();
@@ -201,10 +221,15 @@ export function updatePlanets(planets) {
                 const daysSinceEpoch = (currentTime - epoch) / (24 * 60 * 60 * 1000);
                 const angle = (daysSinceEpoch * 2 * Math.PI) / m.data.period;
 
-                m.mesh.position.x = p.mesh.position.x + (Math.cos(angle) * m.data.distance);
-                m.mesh.position.z = p.mesh.position.z + (Math.sin(angle) * m.data.distance);
-                m.mesh.position.y = p.mesh.position.y;
+                xOffset = Math.cos(angle) * m.data.distance;
+                zOffset = Math.sin(angle) * m.data.distance;
+                yOffset = 0;
             }
+
+            // Apply expansion factor
+            m.mesh.position.x = p.mesh.position.x + (xOffset * expansionFactor);
+            m.mesh.position.z = p.mesh.position.z + (zOffset * expansionFactor);
+            m.mesh.position.y = p.mesh.position.y + (yOffset * expansionFactor);
         });
     });
 }
