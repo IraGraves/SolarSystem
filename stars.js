@@ -27,8 +27,8 @@ function createStarTexture() {
 export async function createStarfield(scene) {
     try {
         const [starsResponse, namesResponse] = await Promise.all([
-            fetch('/assets/stars_3d.json'),
-            fetch('/assets/stars_names.json')
+            fetch(`${import.meta.env.BASE_URL}assets/stars_3d.json`),
+            fetch(`${import.meta.env.BASE_URL}assets/stars_names.json`)
         ]);
 
         const starsData = await starsResponse.json();
@@ -119,8 +119,8 @@ export async function createConstellations(zodiacGroup) {
     try {
         // Load star data and zodiac line data
         const [starsResponse, zodiacLinesResponse] = await Promise.all([
-            fetch('/assets/stars_3d.json'),
-            fetch('/assets/zodiac_lines.json')
+            fetch(`${import.meta.env.BASE_URL}assets/stars_3d.json`),
+            fetch(`${import.meta.env.BASE_URL}assets/zodiac_lines.json`)
         ]);
 
         const starsData = await starsResponse.json();

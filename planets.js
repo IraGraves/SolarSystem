@@ -29,7 +29,7 @@ export function createPlanets(scene, orbitGroup) {
 
     // Sun
     const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
-    const sunTexture = textureLoader.load('/assets/textures/sun.jpg');
+    const sunTexture = textureLoader.load('${import.meta.env.BASE_URL}assets/textures/sun.jpg');
     const sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture });
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     scene.add(sun);
