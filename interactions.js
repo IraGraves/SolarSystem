@@ -140,7 +140,7 @@ function formatTooltip(closestObject) {
             <strong>Orbital Period:</strong> ${data.period.toFixed(1)} days<br>
         `;
     } else if (closestObject.type === 'star') {
-        const distance = data.distance ? data.distance.toFixed(1) : "N/A";
+        const distance = data.distance ? (data.distance * 3.26156).toFixed(1) : "N/A";
         const luminosity = data.radius ? data.radius.toFixed(1) : "N/A";
         return `
             <strong>Name:</strong> ${data.name}<br>

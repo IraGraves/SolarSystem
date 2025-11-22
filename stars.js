@@ -2,6 +2,28 @@ import * as THREE from 'three';
 
 const ZODIAC_IDS = ['Ari', 'Tau', 'Gem', 'Cnc', 'Leo', 'Vir', 'Lib', 'Sco', 'Sgr', 'Cap', 'Aqr', 'Psc'];
 
+function createStarTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const context = canvas.getContext('2d');
+
+    // Draw a radial gradient with high opacity to make stars bright and visible
+    const gradient = context.createRadialGradient(16, 16, 0, 16, 16, 16);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.2, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.9)');
+    gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.7)');
+    gradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.4)');
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 32, 32);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+}
+
 export async function createStarfield(scene) {
     try {
         const [starsResponse, namesResponse] = await Promise.all([
@@ -45,8 +67,8 @@ export async function createStarfield(scene) {
             }
 
             // Size from N (Luminosity?)
-            // Logarithmic scale for size
-            const size = Math.max(1.0, Math.log((star.N || 0) + 1) * 3);
+            // Logarithmic scale for size with balanced multiplier
+            const size = Math.max(3.0, Math.log((star.N || 0) + 1) * 10);
             sizes.push(size);
 
             // Process Name
@@ -62,7 +84,7 @@ export async function createStarfield(scene) {
             processedData.push({
                 id: star.i,
                 name: commonName,
-                distance: star.p, // Light Years
+                distance: star.p, // Parsecs (will be converted to LY in tooltip)
                 radius: star.N, // Using N as proxy for size/luminosity for now
                 colorIndex: "N/A",
                 mag: "N/A"
@@ -75,8 +97,12 @@ export async function createStarfield(scene) {
 
         const material = new THREE.PointsMaterial({
             vertexColors: true,
-            size: 50, // Increased base size for larger scale
-            sizeAttenuation: true
+            size: 200, // Balanced base size - relies on per-star size attribute for variation
+            sizeAttenuation: true,
+            map: createStarTexture(),
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
         });
 
         const stars = new THREE.Points(geometry, material);

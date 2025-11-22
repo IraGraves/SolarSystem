@@ -22,7 +22,7 @@ import { setupFocusMode, updateFocusMode } from './focusMode.js';
         const { planets, sun } = createPlanets(scene, orbitGroup);
 
         // 4. Setup GUI
-        const uiControls = setupGUI(planets, sun, orbitGroup, zodiacGroup);
+        const uiControls = setupGUI(planets, sun, orbitGroup, zodiacGroup, stars);
 
         // 5. Setup interactive tooltip system
         setupTooltipSystem(camera, planets, sun, stars);

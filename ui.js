@@ -1,7 +1,7 @@
 import GUI from 'lil-gui';
 import { config, REAL_PLANET_SCALE_FACTOR, REAL_SUN_SCALE_FACTOR } from './config.js';
 
-export function setupGUI(planets, sun, orbitGroup, zodiacGroup) {
+export function setupGUI(planets, sun, orbitGroup, zodiacGroup, stars) {
     const gui = new GUI({ title: 'Solar System' });
 
     const uiState = {
@@ -42,6 +42,13 @@ export function setupGUI(planets, sun, orbitGroup, zodiacGroup) {
         uiState.sunScaleDisplay = (val * REAL_SUN_SCALE_FACTOR).toFixed(1) + 'x';
     });
     sunSlider.domElement.classList.add('hide-value');
+
+    const starSlider = controlsFolder.add(config, 'starBrightness', 0.1, 2.0).name('Star Brightness').onChange(val => {
+        if (stars && stars.material) {
+            stars.material.opacity = val;
+        }
+    });
+    starSlider.domElement.classList.add('hide-value');
 
     controlsFolder.add(config, 'showOrbits').name('Show Orbits').onChange(val => {
         orbitGroup.visible = val;

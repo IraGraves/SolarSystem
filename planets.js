@@ -114,7 +114,7 @@ export function createPlanets(scene, orbitGroup) {
             const startTime = new Date();
             const periodDays = data.period || 365; // Fallback for Keplerian if period isn't explicitly set
 
-            for (let i = 0; i <= steps; i++) {
+            for (let i = 0; i < steps; i++) {
                 const t = new Date(startTime.getTime() + (i / steps) * periodDays * 24 * 60 * 60 * 1000);
                 let vec;
                 if (data.body) {
@@ -127,7 +127,7 @@ export function createPlanets(scene, orbitGroup) {
 
             const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
             const orbitMat = new THREE.LineBasicMaterial({ color: 0x444444, transparent: true, opacity: 0.5 });
-            orbitLine = new THREE.Line(orbitGeo, orbitMat);
+            orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
             orbitGroup.add(orbitLine);
         }
 
@@ -165,7 +165,7 @@ export function createPlanets(scene, orbitGroup) {
                     const startTime = new Date();
                     const periodDays = moonData.period;
 
-                    for (let i = 0; i <= steps; i++) {
+                    for (let i = 0; i < steps; i++) {
                         const t = new Date(startTime.getTime() + (i / steps) * periodDays * 24 * 60 * 60 * 1000);
                         const jm = Astronomy.JupiterMoons(t);
                         const moonState = [jm.io, jm.europa, jm.ganymede, jm.callisto][moonData.moonIndex];
@@ -177,7 +177,7 @@ export function createPlanets(scene, orbitGroup) {
                     }
                     const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
                     const orbitMat = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.3 });
-                    const orbitLine = new THREE.Line(orbitGeo, orbitMat);
+                    const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
                     orbitLinesGroup.add(orbitLine);
                     moonData.orbitLine = orbitLine;
                 } else if (moonData.type === "simple") {
@@ -185,13 +185,13 @@ export function createPlanets(scene, orbitGroup) {
                     planetGroup.add(moonMesh);
 
                     const orbitPoints = [];
-                    for (let i = 0; i <= 64; i++) {
+                    for (let i = 0; i < 64; i++) {
                         const angle = (i / 64) * Math.PI * 2;
                         orbitPoints.push(new THREE.Vector3(Math.cos(angle) * moonData.distance, 0, Math.sin(angle) * moonData.distance));
                     }
                     const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
                     const orbitMat = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.3 });
-                    const orbitLine = new THREE.Line(orbitGeo, orbitMat);
+                    const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
                     orbitLinesGroup.add(orbitLine);
                     moonData.orbitLine = orbitLine;
                 } else {
@@ -203,7 +203,7 @@ export function createPlanets(scene, orbitGroup) {
                     const startTime = new Date();
                     const periodDays = moonData.period || 27.3;
 
-                    for (let i = 0; i <= steps; i++) {
+                    for (let i = 0; i < steps; i++) {
                         const t = new Date(startTime.getTime() + (i / steps) * periodDays * 24 * 60 * 60 * 1000);
                         const vec = Astronomy.GeoVector(Astronomy.Body[moonData.body], t, true);
                         points.push(new THREE.Vector3(
@@ -214,7 +214,7 @@ export function createPlanets(scene, orbitGroup) {
                     }
                     const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
                     const orbitMat = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.5 });
-                    const orbitLine = new THREE.Line(orbitGeo, orbitMat);
+                    const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
                     orbitLinesGroup.add(orbitLine);
                     moonData.orbitLine = orbitLine;
                 }
