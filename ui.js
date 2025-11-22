@@ -43,9 +43,12 @@ export function setupGUI(planets, sun, orbitGroup, zodiacGroup, stars) {
     });
     sunSlider.domElement.classList.add('hide-value');
 
-    const starSlider = controlsFolder.add(config, 'starBrightness', 0.1, 2.0).name('Star Brightness').onChange(val => {
+    const starSlider = controlsFolder.add(config, 'starBrightness', 0.1, 5.0).name('Star Brightness').onChange(val => {
         if (stars && stars.material) {
-            stars.material.opacity = val;
+            // Control opacity
+            stars.material.opacity = Math.min(val, 2.0);
+            // At high brightness, also increase size to make dim stars more visible
+            stars.material.size = 200 * Math.max(1.0, val / 2.0);
         }
     });
     starSlider.domElement.classList.add('hide-value');
