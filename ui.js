@@ -1,6 +1,22 @@
 import GUI from 'lil-gui';
 import { config, REAL_PLANET_SCALE_FACTOR, REAL_SUN_SCALE_FACTOR } from './config.js';
 
+/**
+ * Sets up the GUI with Scale, Visual, Time, and Navigation sections
+ * 
+ * @param {Array} planets - Array of planet objects with mesh, moons, etc.
+ * @param {THREE.Mesh} sun - The sun mesh
+ * @param {THREE.Group} orbitGroup - Group containing planet orbit lines
+ * @param {THREE.Group} zodiacGroup - Group containing zodiac constellation lines
+ * @param {THREE.Points} stars - The starfield points object
+ * @returns {Object} Object containing uiState and control references for updates
+ * 
+ * Sections:
+ * - Scale: Sun/Planet/Moon scaling with Artistic/Realistic presets
+ * - Visual: Star brightness, orbit lines, dwarf planets, zodiacs, pause
+ * - Time: Date, time, speed controls, and quick-set buttons
+ * - Navigation: Help text for camera and focus controls
+ */
 export function setupGUI(planets, sun, orbitGroup, zodiacGroup, stars) {
     const gui = new GUI({ title: 'Solar System' });
 
@@ -174,6 +190,18 @@ export function setupGUI(planets, sun, orbitGroup, zodiacGroup, stars) {
     return { uiState, dateCtrl, timeCtrl, stardateCtrl, speedDisplay, sunDisplay, planetDisplay, moonDisplay };
 }
 
+/**
+ * Updates the UI display values each frame
+ * 
+ * @param {Object} uiState - UI state object containing display values
+ * @param {Object} controls - Object containing GUI control references
+ * 
+ * Updates:
+ * - Date, time, and stardate displays
+ * - Speed factor (with "Paused" indicator when speed is 0)
+ * - Moon orbit scale display (compound of planet and moon scales)
+ * - Custom value displays for all sliders
+ */
 export function updateUI(uiState, controls) {
     const y = config.date.getFullYear();
     const m = String(config.date.getMonth() + 1).padStart(2, '0');

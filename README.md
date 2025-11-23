@@ -8,8 +8,42 @@ An interactive 3D solar system simulation built with Three.js and the Astronomy 
 - **Realistic Rotation**: Planets rotate based on their actual rotation periods (e.g., Earth rotates once every 24 hours)
 - **Tidal Locking**: Moons like Earth's Moon are tidally locked, always showing the same face to their parent planet
 - **Real Starfield**: Star positions based on actual astronomical data with accurate right ascension and declination
-- **Interactive Controls**: Camera controls, time speed adjustment, orbit visualization, and planet scaling
+- **Adjustable Scaling**: Artistic (500x planets, 20x sun, 100x moon orbits) or Realistic (1x) preset modes
+- **Focus Mode**: Double-click any celestial body to follow it with the camera
+- **Interactive Controls**: Camera controls, time speed adjustment, orbit visualization, and dynamic scaling
 - **Moon Systems**: Detailed representation of Earth's Moon, Jupiter's Galilean moons, and Saturn's Titan
+
+## User Interface
+
+The UI is organized into four sections:
+
+### Scale
+- **Sun Scale**: Adjust sun size (20x default, ~1x realistic)
+- **Planet Scale**: Adjust planet sizes (500x default, ~1x realistic)
+- **Moon Orbit Scale**: Adjust moon orbital distances (0.1-10 range, 0.2 default for ~100x)
+- **Scale Preset**: Quick switch between "Artistic" and "Realistic" presets
+
+### Visual
+- **Star Brightness**: Adjust starfield brightness and size
+- **Show Orbits**: Toggle planet and moon orbit lines
+- **Show Dwarf Planets**: Toggle visibility of Ceres and Pluto
+- **Show Zodiacs**: Toggle zodiac constellation lines
+- **Pause Simulation**: Pause time progression
+
+### Time
+- **Date**: Select simulation date
+- **Time**: Current simulation time (display only)
+- **Stardate**: Year with fractional day (display only)
+- **Set to Now**: Reset date/time to current
+- **Speed**: Logarithmic time speed control (-11 to 11, displays as multiplier)
+- **Set to Real-Time**: Reset speed to 1x
+
+### Navigation
+- **Rotate**: Left Click + Drag
+- **Pan**: Right Click + Drag
+- **Zoom**: Scroll
+- **Focus**: Double Click Object
+- **Exit Focus**: Escape Key
 
 ## Architecture
 
@@ -38,10 +72,20 @@ An interactive 3D solar system simulation built with Three.js and the Astronomy 
 ### Key Constants
 
 ```javascript
-AU_TO_SCENE = 50           // Astronomical Units to scene units
-MOON_DISTANCE_SCALE = 50   // Scale factor for Earth's Moon distance
-JOVIAN_MOON_SCALE = 100    // Scale factor for Jupiter's moon distances
+AU_TO_SCENE = 50                     // Astronomical Units to scene units
+REAL_PLANET_SCALE_FACTOR = 500       // Makes slider value of 1.0 = 500x realistic size
+REAL_SUN_SCALE_FACTOR = 20           // Makes slider value of 1.0 = 20x realistic size
 ```
+
+### Moon Orbit Scaling
+
+Moon orbital distances are calculated with a compound scaling formula to maintain visual coherence:
+
+```javascript
+finalDistance = baseDistance(AU) * AU_TO_SCENE * planetScale * moonOrbitScale * REAL_PLANET_SCALE_FACTOR
+```
+
+This ensures moon orbits scale proportionally with planet sizes. The default configuration (planetScale=1.0, moonOrbitScale=0.2) results in approximately 100x artistic scaling for moon orbits.
 
 ## Data Structure
 
@@ -71,7 +115,7 @@ JOVIAN_MOON_SCALE = 100    // Scale factor for Jupiter's moon distances
 
 ### Moon Types
 
-- **`type: "real"`**: Uses Astronomy Engine (e.g., Earth's Moon)
+- **`type: "real"`**: Uses Astronomy Engine (e.g., Earth's Moon via `Astronomy.GeoVector`)
 - **`type: "jovian"`**: Jupiter's moons, uses `Astronomy.JupiterMoons()`
 - **`type: "simple"`**: Simplified circular orbit (e.g., Titan)
 
@@ -101,11 +145,14 @@ Rotation is calculated to always face the parent planet:
 rotationAngle = atan2(xOffset, zOffset) + π
 ```
 
-## Orbit Line Scaling
+## Scaling System
 
-Moon orbit lines are dynamically scaled to prevent overlap when planets are enlarged:
-- Expansion factor calculated based on `config.planetScale`
-- Ensures moon orbits remain visible even with large planet scaling
+The simulation uses a dual-scaling system:
+
+1. **Display Scaling**: What users see in the UI (20x, 500x, 100x)
+2. **Slider Values**: Internal values (0.002-5.0 for planets, 0.05-5.0 for sun, 0.1-10 for moon orbits)
+
+The constants `REAL_PLANET_SCALE_FACTOR` and `REAL_SUN_SCALE_FACTOR` convert between these, allowing intuitive "1x = realistic" display while maintaining precise control.
 
 ## Development
 
@@ -124,12 +171,18 @@ npm run dev
 npm run build
 ```
 
+### Deploy to GitHub Pages
+```bash
+npm run deploy
+```
+
 ## Technologies
 
 - **Three.js**: 3D rendering
 - **Astronomy Engine**: Accurate celestial mechanics calculations
 - **Vite**: Build tool and development server
 - **lil-gui**: UI controls
+- **OrbitControls**: Camera manipulation
 
 ## License
 

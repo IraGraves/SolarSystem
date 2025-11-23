@@ -1,5 +1,9 @@
+// Scale factors that convert slider values to display values
+// e.g., planetScale slider of 1.0 displays as "500x"
 export const REAL_PLANET_SCALE_FACTOR = 500;
 export const REAL_SUN_SCALE_FACTOR = 20;
+
+// Conversion factor from Astronomical Units to Three.js scene units
 export const AU_TO_SCENE = 50;
 
 export const config = {
