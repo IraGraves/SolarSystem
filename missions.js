@@ -39,8 +39,48 @@ const voyager2Waypoints = [
     new THREE.Vector3(50, -3.5, -5.0),      // Current approximate position (2024)
 ];
 
+// Pioneer 10 trajectory waypoints (launched March 1972)
+const pioneer10Waypoints = [
+    new THREE.Vector3(1.0, 0, 0.05),        // Earth (launch March 1972)
+    new THREE.Vector3(3.5, 0.2, 0.4),       // Approaching Jupiter
+    new THREE.Vector3(5.2, 0, 0.6),         // Jupiter flyby (Dec 1973)
+    new THREE.Vector3(10, 1.0, 1.5),        // Continuing outward
+    new THREE.Vector3(20, 2.5, 3.0),        // Far outer solar system
+    new THREE.Vector3(35, 4.5, 5.5),        // Current approximate position
+];
+
+// Pioneer 11 trajectory waypoints (launched April 1973)
+const pioneer11Waypoints = [
+    new THREE.Vector3(1.0, 0, -0.05),       // Earth (launch April 1973)
+    new THREE.Vector3(4.0, -0.3, 0.3),      // Approaching Jupiter
+    new THREE.Vector3(5.2, 0, 0.4),         // Jupiter flyby (Dec 1974)
+    new THREE.Vector3(7.0, 0.4, 0.6),       // Between Jupiter and Saturn
+    new THREE.Vector3(9.5, 0, 0.8),         // Saturn flyby (Sept 1979)
+    new THREE.Vector3(15, -1.5, 1.5),       // Continuing outward
+    new THREE.Vector3(25, -3.0, 3.0),       // Current approximate position
+];
+
+// Galileo trajectory waypoints (launched Oct 1989, orbited Jupiter)
+const galileoWaypoints = [
+    new THREE.Vector3(1.0, 0, 0),          // Earth (launch Oct 1989)
+    new THREE.Vector3(0.7, -0.1, -0.05),   // Venus flyby (Feb 1990)
+    new THREE.Vector3(1.0, 0.05, 0.1),     // Earth flyby 1 (Dec 1990)
+    new THREE.Vector3(2.0, 0.2, 0.2),      // Asteroid belt
+    new THREE.Vector3(1.0, -0.05, 0.15),   // Earth flyby 2 (Dec 1992)
+    new THREE.Vector3(3.5, 0.3, 0.4),      // Approaching Jupiter
+    new THREE.Vector3(5.2, 0, 0.5),        // Jupiter orbit insertion (Dec 1995)
+    // Add orbital points around Jupiter
+    new THREE.Vector3(5.3, 0.1, 0.5),
+    new THREE.Vector3(5.2, 0, 0.6),
+    new THREE.Vector3(5.1, -0.1, 0.5),
+    new THREE.Vector3(5.2, 0, 0.4),        // Remained in orbit until 2003
+];
+
 let voyager1Line = null;
 let voyager2Line = null;
+let pioneer10Line = null;
+let pioneer11Line = null;
+let galileoLine = null;
 
 /**
  * Initialize mission trajectories and add them to the scene
@@ -77,7 +117,52 @@ export function initializeMissions(scene) {
     voyager2Line.visible = config.showMissions.voyager2;
     scene.add(voyager2Line);
 
-    return { voyager1Line, voyager2Line };
+    // Create Pioneer 10 trajectory
+    const p10Points = createSmoothPath(pioneer10Waypoints, 150);
+    const p10Geometry = new THREE.BufferGeometry().setFromPoints(
+        p10Points.map(p => p.multiplyScalar(AU_TO_SCENE))
+    );
+    const p10Material = new THREE.LineBasicMaterial({
+        color: 0xFFA500, // Orange
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.8
+    });
+    pioneer10Line = new THREE.Line(p10Geometry, p10Material);
+    pioneer10Line.visible = config.showMissions.pioneer10;
+    scene.add(pioneer10Line);
+
+    // Create Pioneer 11 trajectory
+    const p11Points = createSmoothPath(pioneer11Waypoints, 150);
+    const p11Geometry = new THREE.BufferGeometry().setFromPoints(
+        p11Points.map(p => p.multiplyScalar(AU_TO_SCENE))
+    );
+    const p11Material = new THREE.LineBasicMaterial({
+        color: 0x00FF00, // Lime Green
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.8
+    });
+    pioneer11Line = new THREE.Line(p11Geometry, p11Material);
+    pioneer11Line.visible = config.showMissions.pioneer11;
+    scene.add(pioneer11Line);
+
+    // Create Galileo trajectory
+    const galPoints = createSmoothPath(galileoWaypoints, 180);
+    const galGeometry = new THREE.BufferGeometry().setFromPoints(
+        galPoints.map(p => p.multiplyScalar(AU_TO_SCENE))
+    );
+    const galMaterial = new THREE.LineBasicMaterial({
+        color: 0xFFD700, // Gold
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.8
+    });
+    galileoLine = new THREE.Line(galGeometry, galMaterial);
+    galileoLine.visible = config.showMissions.galileo;
+    scene.add(galileoLine);
+
+    return { voyager1Line, voyager2Line, pioneer10Line, pioneer11Line, galileoLine };
 }
 
 /**
@@ -89,5 +174,14 @@ export function updateMissions() {
     }
     if (voyager2Line) {
         voyager2Line.visible = config.showMissions.voyager2;
+    }
+    if (pioneer10Line) {
+        pioneer10Line.visible = config.showMissions.pioneer10;
+    }
+    if (pioneer11Line) {
+        pioneer11Line.visible = config.showMissions.pioneer11;
+    }
+    if (galileoLine) {
+        galileoLine.visible = config.showMissions.galileo;
     }
 }

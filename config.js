@@ -18,7 +18,10 @@ export const config = {
     showZodiacs: false,
     showMissions: {
         voyager1: false,
-        voyager2: false
+        voyager2: false,
+        pioneer10: false,
+        pioneer11: false,
+        galileo: false
     },
     date: new Date(),
     stop: false
