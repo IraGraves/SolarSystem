@@ -183,6 +183,8 @@ export function setupGUI(planets, sun, orbitGroup, zodiacGroup, stars) {
     });
     galCtrl.domElement.classList.add('galileo-checkbox');
 
+    missionsFolder.close(); // Close Missions subfolder by default
+
     const updateDwarfVisibility = (val) => {
         planets.forEach(p => {
             if (p.data.type === 'dwarf') {
@@ -201,6 +203,8 @@ export function setupGUI(planets, sun, orbitGroup, zodiacGroup, stars) {
     });
 
     visualFolder.add(config, 'stop').name('Pause Simulation');
+
+    visualFolder.close(); // Close Visual folder by default
 
     const timeFolder = gui.addFolder('Time');
     const dateCtrl = timeFolder.add(uiState, 'date').name('Date').onChange(val => {
@@ -236,6 +240,8 @@ export function setupGUI(planets, sun, orbitGroup, zodiacGroup, stars) {
     };
     timeFolder.add(uiState, 'setRealTime').name('Set to Real-Time');
 
+    timeFolder.close(); // Close Time folder by default
+
     const navFolder = gui.addFolder('Navigation');
     const rotateCtrl = navFolder.add(uiState, 'rotate').name('Rotate');
     rotateCtrl.disable();
@@ -247,6 +253,9 @@ export function setupGUI(planets, sun, orbitGroup, zodiacGroup, stars) {
     focusEnterCtrl.disable();
     const focusExitCtrl = navFolder.add(uiState, 'focusExit').name('Exit Focus');
     focusExitCtrl.disable();
+
+    navFolder.close(); // Close Navigation folder by default
+    scaleFolder.close(); // Close Scale folder by default
 
     return { uiState, dateCtrl, timeCtrl, stardateCtrl, speedDisplay, sunDisplay, planetDisplay, moonDisplay };
 }
