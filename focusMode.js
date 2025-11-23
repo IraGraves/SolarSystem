@@ -113,9 +113,22 @@ function focusOnObject(targetObject, camera, controls) {
     const worldPos = new THREE.Vector3();
     targetObject.mesh.getWorldPosition(worldPos);
 
-    // Calculate camera position based on object size
+    // Calculate camera position based on object's VISUAL size (radius × scale)
     const radius = targetObject.data.radius || 5;
-    const distance = radius * FOLLOW_DISTANCE_MULTIPLIER;
+
+    // Get the current scale of the object
+    let currentScale = 1;
+    if (targetObject.type === 'sun') {
+        currentScale = config.sunScale;
+    } else if (targetObject.type === 'planet' || targetObject.type === 'moon') {
+        currentScale = config.planetScale;
+    }
+
+    // Calculate visual radius (how big the object actually appears)
+    const visualRadius = radius * currentScale;
+
+    // Calculate distance based on visual size
+    const distance = visualRadius * FOLLOW_DISTANCE_MULTIPLIER;
 
     // Position camera in front and slightly above the object
     const angle = Math.PI / 6; // 30 degrees above
