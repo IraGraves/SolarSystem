@@ -1314,3 +1314,9 @@ canvas {
     background: rgba(255, 255, 255, 0.2);
     border-color: rgba(255, 255, 255, 0.4);
 }
+
+/* Fix for closing the folder: ensure it stays hidden when closed */
+.time-folder.closed .children {
+    display: none;
+    height: 0 !important;
+}
