@@ -4,6 +4,9 @@ import * as Astronomy from 'astronomy-engine';
 import { config, AU_TO_SCENE, REAL_PLANET_SCALE_FACTOR } from './config.js';
 import { planetData, dwarfPlanetData } from './src/data/bodies.js';
 import { calculateKeplerianPosition } from './src/physics/orbits.js';
+import { createRing } from './src/systems/rings.js';
+import { createMoons, updateMoonPositions } from './src/systems/moons.js';
+import { createOrbitLine } from './src/systems/orbits.js';
 
 /**
  * Creates all planet and moon meshes with their orbit lines
@@ -11,11 +14,6 @@ import { calculateKeplerianPosition } from './src/physics/orbits.js';
  * @param {THREE.Scene} scene - The Three.js scene to add objects to
  * @param {THREE.Group} orbitGroup - Group containing planet orbit lines
  * @returns {Object} Object containing planets array, sun mesh, and dwarfPlanets array
- * 
- * Note: Each planet has a planetGroup containing:
- * - mesh: The planet sphere
- * - orbitLinesGroup: Group for moon orbit lines (moves with planet, doesn't rotate)
- * Moon meshes are added directly to planetGroup to avoid inheriting planet rotation
  */
 export function createPlanets(scene, orbitGroup) {
     const planets = [];
@@ -85,8 +83,6 @@ export function createPlanets(scene, orbitGroup) {
 
         // Add atmosphere and clouds for Earth
         if (data.name === "Earth") {
-
-
             // 2. Cloud layer
             if (data.cloudTexture) {
                 const cloudGeometry = new THREE.SphereGeometry(data.radius * 1.01, 32, 32);
@@ -110,183 +106,14 @@ export function createPlanets(scene, orbitGroup) {
         const orbitLinesGroup = new THREE.Group();
         planetGroup.add(orbitLinesGroup);
 
-        if (data.ring) {
-            const ringGeo = new THREE.RingGeometry(data.ring.inner, data.ring.outer, 128); // Increased segments for smoothness
+        // Create Rings
+        createRing(data, mesh, textureLoader);
 
-            // Adjust UV mapping for ring geometry to work with linear gradient texture
-            const pos = ringGeo.attributes.position;
-            const v3 = new THREE.Vector3();
-            for (let i = 0; i < pos.count; i++) {
-                v3.fromBufferAttribute(pos, i);
-                // Map radius to V coordinate (0 to 1)
-                const radius = v3.length();
-                // Normalize radius between inner and outer
-                const v = (radius - data.ring.inner) / (data.ring.outer - data.ring.inner);
-                ringGeo.attributes.uv.setXY(i, v, 0);
-            }
+        // Create Orbit Line
+        const orbitLine = createOrbitLine(data, orbitGroup);
 
-            let ringMat;
-            if (data.name === "Saturn") {
-                // Procedural texture for Saturn
-                const ringTexture = createSaturnRingTexture();
-                ringMat = new THREE.MeshStandardMaterial({
-                    map: ringTexture,
-                    side: THREE.DoubleSide,
-                    transparent: true,
-                    opacity: 0.9,
-                    roughness: 0.8,
-                    metalness: 0.2
-                });
-            } else if (data.ring.texture) {
-                const ringTexture = textureLoader.load(data.ring.texture);
-                ringMat = new THREE.MeshStandardMaterial({ map: ringTexture, side: THREE.DoubleSide, transparent: true, opacity: 1.0 });
-            } else {
-                ringMat = new THREE.MeshStandardMaterial({ color: data.ring.color, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
-            }
-            const ring = new THREE.Mesh(ringGeo, ringMat);
-            ring.rotation.x = Math.PI / 2;
-            mesh.add(ring);
-        }
-
-        let orbitLine = null;
-
-        // Main planet orbit line
-        if (data.body || data.elements) { // Only if we can calculate orbit
-            const points = [];
-            const steps = 360;
-            const startTime = new Date();
-            const periodDays = data.period || 365; // Fallback for Keplerian if period isn't explicitly set
-
-            for (let i = 0; i < steps; i++) {
-                const t = new Date(startTime.getTime() + (i / steps) * periodDays * 24 * 60 * 60 * 1000);
-                let vec;
-                if (data.body) {
-                    vec = Astronomy.HelioVector(Astronomy.Body[data.body], t);
-                } else if (data.elements) {
-                    vec = calculateKeplerianPosition(data.elements, t);
-                }
-                points.push(new THREE.Vector3(vec.x * AU_TO_SCENE, vec.z * AU_TO_SCENE, -vec.y * AU_TO_SCENE));
-            }
-
-            const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
-            const orbitMat = new THREE.LineBasicMaterial({ color: 0x444444, transparent: true, opacity: 0.5 });
-            orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
-            orbitGroup.add(orbitLine);
-        }
-
-        const moons = [];
-        if (data.moons) {
-            data.moons.forEach(moonData => {
-                const moonGeo = new THREE.SphereGeometry(moonData.radius, 16, 16);
-                let moonMat;
-                if (moonData.texture) {
-                    const moonTexture = textureLoader.load(moonData.texture, undefined, undefined, () => {
-                        moonMat.color.setHex(moonData.color);
-                    });
-                    moonMat = new THREE.MeshStandardMaterial({ map: moonTexture, color: 0xffffff });
-                } else {
-                    moonMat = new THREE.MeshStandardMaterial({ color: moonData.color });
-                }
-                const moonMesh = new THREE.Mesh(moonGeo, moonMat);
-
-                // Apply initial scale
-                moonMesh.scale.setScalar(config.planetScale);
-
-                if (moonData.axialTilt !== undefined && !moonData.tidallyLocked) {
-                    const tiltRadians = (moonData.axialTilt * Math.PI) / 180;
-                    moonMesh.rotation.z = tiltRadians;
-                }
-
-                // Create moon axis line
-                const moonAxisLength = moonData.radius * 2.5;
-                const moonAxisGeo = new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0, -moonAxisLength, 0),
-                    new THREE.Vector3(0, moonAxisLength, 0)
-                ]);
-                const moonAxisMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
-                const moonAxisLine = new THREE.Line(moonAxisGeo, moonAxisMat);
-                moonAxisLine.visible = config.showAxes;
-                moonMesh.add(moonAxisLine);
-                moonData.axisLine = moonAxisLine;
-
-                if (moonData.type === "jovian") {
-                    // Jupiter's Galilean moons - add to planetGroup to avoid rotation
-                    planetGroup.add(moonMesh);
-
-                    const orbitPoints = [];
-                    const steps = 90;
-                    const startTime = new Date();
-                    const periodDays = moonData.period;
-
-                    for (let i = 0; i < steps; i++) {
-                        const t = new Date(startTime.getTime() + (i / steps) * periodDays * 24 * 60 * 60 * 1000);
-                        const jm = Astronomy.JupiterMoons(t);
-                        const moonState = [jm.io, jm.europa, jm.ganymede, jm.callisto][moonData.moonIndex];
-                        // Store base points without scaling (use AU_TO_SCENE only)
-                        orbitPoints.push(new THREE.Vector3(
-                            moonState.x * AU_TO_SCENE,
-                            moonState.z * AU_TO_SCENE,
-                            -moonState.y * AU_TO_SCENE
-                        ));
-                    }
-                    // Save base points for later scaling (not strictly needed for scaling mesh, but good for debug)
-                    moonData._orbitBasePoints = orbitPoints;
-                    // Create geometry at 1x scale (base AU_TO_SCENE)
-                    const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
-                    const orbitMat = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.3 });
-                    const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
-                    orbitLinesGroup.add(orbitLine);
-                    moonData.orbitLine = orbitLine;
-                } else if (moonData.type === "simple") {
-                    // Simple circular orbit - add to planetGroup to avoid rotation
-                    planetGroup.add(moonMesh);
-
-                    const moonScale = config.planetScale * config.moonOrbitScale * REAL_PLANET_SCALE_FACTOR;
-                    const orbitPoints = [];
-                    const radiusBase = moonData.distance * AU_TO_SCENE;
-                    for (let i = 0; i < 64; i++) {
-                        const angle = (i / 64) * Math.PI * 2;
-                        orbitPoints.push(new THREE.Vector3(Math.cos(angle) * radiusBase, 0, Math.sin(angle) * radiusBase));
-                    }
-                    // Save base points for scaling later
-                    moonData._orbitBasePoints = orbitPoints;
-                    // Create geometry at 1x scale
-                    const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
-                    const orbitMat = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.3 });
-                    const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
-                    orbitLinesGroup.add(orbitLine);
-                    moonData.orbitLine = orbitLine;
-                } else {
-                    // Earth's Moon - add to planetGroup to avoid rotation
-                    planetGroup.add(moonMesh);
-
-                    const points = [];
-                    const steps = 90;
-                    const startTime = new Date();
-                    const periodDays = moonData.period || 27.3;
-
-                    // Calculate moon orbit scale: base distance × planet scale × moon orbit scale
-                    // const moonScale = config.planetScale * config.moonOrbitScale; // REMOVED: We want base points for scaling via mesh.scale
-                    for (let i = 0; i < steps; i++) {
-                        const t = new Date(startTime.getTime() + (i / steps) * periodDays * 24 * 60 * 60 * 1000);
-                        const vec = Astronomy.GeoVector(Astronomy.Body[moonData.body], t, true);
-                        points.push(new THREE.Vector3(
-                            vec.x * AU_TO_SCENE,
-                            vec.z * AU_TO_SCENE,
-                            -vec.y * AU_TO_SCENE
-                        ));
-                    }
-                    // Create geometry at 1x scale
-                    const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
-                    const orbitMat = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.5 });
-                    const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
-                    orbitLinesGroup.add(orbitLine);
-                    moonData.orbitLine = orbitLine;
-                }
-
-                moons.push({ mesh: moonMesh, data: moonData });
-            });
-        }
+        // Create Moons
+        const moons = createMoons(data, planetGroup, orbitLinesGroup, textureLoader);
 
         const planetObj = { group: planetGroup, mesh: mesh, data: data, moons: moons, orbitLinesGroup: orbitLinesGroup, orbitLine: orbitLine };
         planets.push(planetObj);
@@ -303,13 +130,6 @@ export function createPlanets(scene, orbitGroup) {
  * Updates all planet and moon positions and rotations based on config.date
  * 
  * @param {Object[]} planets - Array of planet objects from createPlanets()
- * 
- * Key behaviors:
- * - Planet positions: Calculated from Astronomy Engine or Keplerian elements
- * - Planet rotations: Deterministic based on rotationPeriod and time since J2000
- * - Moon positions: Calculated relative to parent planet (planetocentric)
- * - Tidal locking: Moons with tidallyLocked=true always face parent planet
- * - Orbit scaling: Moon orbits scale dynamically to prevent planet overlap
  */
 export function updatePlanets(planets) {
     planets.forEach(p => {
@@ -324,7 +144,6 @@ export function updatePlanets(planets) {
             const pos = calculateKeplerianPosition(p.data.elements, config.date);
             p.mesh.position.x = pos.x * AU_TO_SCENE;
             p.mesh.position.z = -pos.y * AU_TO_SCENE; // Swap Y/Z for Three.js
-
         }
 
         if (!config.stop && p.data.cloudMesh) {
@@ -372,116 +191,7 @@ export function updatePlanets(planets) {
             }
         }
 
-        if (p.moons) {
-            p.moons.forEach(m => {
-                let xOffset, yOffset, zOffset;
-
-                if (m.data.type === "jovian") {
-                    // Jupiter's Galilean moons - world position (planet pos + moon offset)
-                    const jm = Astronomy.JupiterMoons(config.date);
-                    const moonState = [jm.io, jm.europa, jm.ganymede, jm.callisto][m.data.moonIndex];
-
-                    // Update orbit line scale
-                    if (m.data.orbitLine) {
-                        m.data.orbitLine.scale.setScalar(config.planetScale * config.moonOrbitScale * REAL_PLANET_SCALE_FACTOR);
-                    }
-
-                    const moonScale = config.planetScale * config.moonOrbitScale * REAL_PLANET_SCALE_FACTOR;
-                    xOffset = moonState.x * AU_TO_SCENE * moonScale;
-                    zOffset = -moonState.y * AU_TO_SCENE * moonScale;
-                    yOffset = moonState.z * AU_TO_SCENE * moonScale;
-                } else if (m.data.type === "real") {
-                    // Earth's Moon - world position (planet pos + moon offset)
-                    const moonVector = Astronomy.GeoVector(Astronomy.Body[m.data.body], config.date, true);
-                    // Update orbit line scale
-                    if (m.data.orbitLine) {
-                        m.data.orbitLine.scale.setScalar(config.planetScale * config.moonOrbitScale * REAL_PLANET_SCALE_FACTOR);
-                    }
-                    const moonScale = config.planetScale * config.moonOrbitScale * REAL_PLANET_SCALE_FACTOR;
-                    xOffset = moonVector.x * AU_TO_SCENE * moonScale;
-                    zOffset = -moonVector.y * AU_TO_SCENE * moonScale;
-                    yOffset = moonVector.z * AU_TO_SCENE * moonScale;
-                } else {
-                    // Simple moons (Titan) - world position (planet pos + moon offset)
-                    const epoch = new Date(2000, 0, 1).getTime();
-                    const currentTime = config.date.getTime();
-                    const daysSinceEpoch = (currentTime - epoch) / (24 * 60 * 60 * 1000);
-                    const angle = (daysSinceEpoch * 2 * Math.PI) / m.data.period;
-
-                    // Update orbit line scale
-                    if (m.data.orbitLine) {
-                        m.data.orbitLine.scale.setScalar(config.planetScale * config.moonOrbitScale * REAL_PLANET_SCALE_FACTOR);
-                    }
-
-                    const radius = m.data.distance * AU_TO_SCENE * config.planetScale * config.moonOrbitScale * REAL_PLANET_SCALE_FACTOR;
-                    xOffset = Math.cos(angle) * radius;
-                    zOffset = Math.sin(angle) * radius;
-                    yOffset = 0;
-                }
-
-                // Apply expansion factor (if any) - though with dynamic scaling this might be redundant or additive
-                m.mesh.position.x = p.mesh.position.x + (xOffset * expansionFactor);
-                m.mesh.position.z = p.mesh.position.z + (zOffset * expansionFactor);
-                m.mesh.position.y = p.mesh.position.y + (yOffset * expansionFactor);
-
-                // Apply tidal locking
-                if (m.data.tidallyLocked) {
-                    m.mesh.rotation.y = Math.atan2(xOffset, zOffset) + Math.PI;
-                }
-            });
-        }
+        // Update Moons
+        updateMoonPositions(p, expansionFactor);
     });
-}
-
-/**
- * Generates a high-quality procedural texture for Saturn's rings
- * @returns {THREE.CanvasTexture} The generated texture
- */
-function createSaturnRingTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1;
-    const context = canvas.getContext('2d');
-
-    const gradient = context.createLinearGradient(0, 0, 1024, 0);
-
-    // Color stops based on Saturn's ring structure (C, B, A rings)
-    // 0.0 is inner edge, 1.0 is outer edge
-
-    // C Ring (faint, transparent)
-    gradient.addColorStop(0.00, 'rgba(30, 30, 30, 0.0)');
-    gradient.addColorStop(0.10, 'rgba(30, 30, 30, 0.1)');
-    gradient.addColorStop(0.15, 'rgba(40, 40, 40, 0.2)');
-
-    // B Ring (bright, dense)
-    gradient.addColorStop(0.25, 'rgba(180, 170, 150, 0.8)');
-    gradient.addColorStop(0.35, 'rgba(200, 190, 170, 0.9)');
-    gradient.addColorStop(0.40, 'rgba(210, 200, 180, 1.0)');
-    gradient.addColorStop(0.45, 'rgba(190, 180, 160, 0.9)');
-    gradient.addColorStop(0.50, 'rgba(170, 160, 140, 0.8)');
-
-    // Cassini Division (dark gap)
-    gradient.addColorStop(0.55, 'rgba(20, 20, 20, 0.1)');
-    gradient.addColorStop(0.58, 'rgba(20, 20, 20, 0.1)');
-
-    // A Ring (moderate brightness)
-    gradient.addColorStop(0.60, 'rgba(160, 150, 130, 0.7)');
-    gradient.addColorStop(0.70, 'rgba(170, 160, 140, 0.8)');
-    gradient.addColorStop(0.80, 'rgba(160, 150, 130, 0.7)');
-
-    // Encke Gap (small gap)
-    gradient.addColorStop(0.85, 'rgba(20, 20, 20, 0.2)');
-    gradient.addColorStop(0.86, 'rgba(20, 20, 20, 0.2)');
-
-    // Outer A Ring
-    gradient.addColorStop(0.88, 'rgba(150, 140, 120, 0.6)');
-    gradient.addColorStop(1.00, 'rgba(140, 130, 110, 0.0)'); // Fade out
-
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, 1024, 1);
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = THREE.ClampToEdgeWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
-    return texture;
 }
