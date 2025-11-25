@@ -8,6 +8,8 @@ import { setupTooltipSystem } from './interactions.js';
 import { setupFocusMode, updateFocusMode } from './src/features/focusMode.js';
 import { initializeMissions, updateMissions } from './src/features/missions.js';
 
+import { createRabbit } from './src/systems/rabbit.js';
+
 // --- Init ---
 (async () => {
     try {
@@ -33,6 +35,9 @@ import { initializeMissions, updateMissions } from './src/features/missions.js';
         initializeMissions(scene);
         window.updateMissions = updateMissions;
 
+        // 3.5 Setup Rabbit Intro
+        const rabbit = createRabbit(renderer);
+
         // 4. Remove Loading Screen (Immediate)
         loading.style.opacity = 0;
         loading.style.pointerEvents = 'none';
@@ -53,8 +58,17 @@ import { initializeMissions, updateMissions } from './src/features/missions.js';
             updateUI(uiControls.uiState, uiControls);
             updatePlanets(planets, sun);
             updateFocusMode(camera, controls, planets, sun);
+
+            // Update Rabbit
+            rabbit.update(delta);
+
             controls.update();
+
+            // Render Main Scene
             renderer.render(scene, camera);
+
+            // Render Rabbit (Overlay)
+            rabbit.render();
         }
         animate();
 
