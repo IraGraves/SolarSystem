@@ -23,7 +23,7 @@ import { initializeMissions, updateMissions } from './src/features/missions.js';
         const { planets, sun } = createPlanets(scene, orbitGroup);
 
         // 4. Setup GUI
-        const uiControls = setupGUI(planets, sun, orbitGroup, zodiacGroup, stars);
+        const uiControls = setupGUI(planets, sun, orbitGroup, zodiacGroup, stars, renderer);
 
         // 5. Setup interactive tooltip system
         setupTooltipSystem(camera, planets, sun, stars);

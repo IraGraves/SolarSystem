@@ -45,6 +45,7 @@ The UI is organized into four collapsible sections (all closed by default):
 
 ### Visual
 - **Star Brightness**: Adjust starfield brightness and size
+- **Gamma**: Adjust scene exposure/brightness
 
 ### Time
 - **Date**: Select simulation date

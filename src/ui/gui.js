@@ -17,7 +17,7 @@ import { config, REAL_PLANET_SCALE_FACTOR, REAL_SUN_SCALE_FACTOR } from '../conf
  * - Time: Date, time, speed controls, and quick-set buttons
  * - Navigation: Help text for camera and focus controls
  */
-export function setupGUI(planets, sun, orbitGroup, zodiacGroup, stars) {
+export function setupGUI(planets, sun, orbitGroup, zodiacGroup, stars, renderer) {
     const gui = new GUI({ title: 'White Rabbit' });
 
     const uiState = {
@@ -241,15 +241,53 @@ export function setupGUI(planets, sun, orbitGroup, zodiacGroup, stars) {
 
     const visualFolder = gui.addFolder('Visual');
 
-    const starSlider = visualFolder.add(config, 'starBrightness', 0.1, 5.0).name('Star Brightness').onChange(val => {
+    const updateStarBrightness = (val) => {
         if (stars && stars.material) {
-            // Control opacity
-            stars.material.opacity = Math.min(val, 2.0);
-            // At high brightness, also increase size to make dim stars more visible
-            stars.material.size = 200 * Math.max(1.0, val / 2.0);
+            // Piecewise logic for better control:
+            // 0.0 - 0.6: Fine Opacity Control (0.0 -> 0.3) - Realistic Range
+            // 0.6 - 0.8: Rapid Opacity Ramp (0.3 -> 1.0)
+            // 0.8 - 1.0: Intensity Boost (1.0 -> 100.0) - Turbo Range
+
+            let opacity = 1.0;
+            let intensity = 1.0;
+
+            if (val <= 0.6) {
+                opacity = (val / 0.6) * 0.3;
+            } else if (val <= 0.8) {
+                opacity = 0.3 + ((val - 0.6) / 0.2) * 0.7;
+            } else {
+                opacity = 1.0;
+                // Exponential boost from 1.0 to 100.0
+                // (val - 0.8) / 0.2 goes 0 -> 1
+                const t = (val - 0.8) / 0.2;
+                intensity = 1.0 + Math.pow(t, 3) * 99.0;
+            }
+
+            stars.material.opacity = opacity;
+            stars.material.color.setScalar(intensity);
+
+            // Subtle size increase only at very high settings (Turbo Range)
+            if (val > 0.8) {
+                const t = (val - 0.8) / 0.2;
+                stars.material.size = 1.0 + t * 0.2; // Max 1.2x
+            } else {
+                stars.material.size = 1.0;
+            }
+        }
+    };
+
+    const starSlider = visualFolder.add(config, 'starBrightness', 0.0, 1.0).name('Star Brightness').onChange(updateStarBrightness);
+    starSlider.domElement.classList.add('hide-value');
+
+    // Initialize star brightness state
+    updateStarBrightness(config.starBrightness);
+
+    const gammaSlider = visualFolder.add(config, 'gamma', 0.1, 5.0).name('Gamma').onChange(val => {
+        if (renderer) {
+            renderer.toneMappingExposure = val;
         }
     });
-    starSlider.domElement.classList.add('hide-value');
+    gammaSlider.domElement.classList.add('hide-value');
 
     visualFolder.close(); // Close Visual folder by default
 
