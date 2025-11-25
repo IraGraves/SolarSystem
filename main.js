@@ -11,6 +11,7 @@ import { initializeMissions, updateMissions } from './src/features/missions.js';
 // --- Init ---
 (async () => {
     try {
+        console.log("White Rabbit Version: 1.2 (Async Stars + Progressive Planets)");
         const loading = document.getElementById('loading');
         loading.textContent = 'Initializing... (Base: ' + import.meta.env.BASE_URL + ')';
 
