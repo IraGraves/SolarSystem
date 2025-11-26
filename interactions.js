@@ -167,15 +167,26 @@ function formatTooltip(closestObject) {
 
         if (closestObject.type === 'sun') {
             return `
-                <strong>Name:</strong> Sun<br>
-                <strong>Type:</strong> G-type Main Sequence Star<br>
-                <strong>Radius:</strong> 696,000 km<br>
+                <div style="min-width: 200px;">
+                    <strong style="font-size: 1.1em;">Sun</strong><br>
+                    <strong>Type:</strong> G-type Main Sequence Star (G2V)<br>
+                    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 5px 0;">
+                    <strong>Radius:</strong> 696,340 km (109 x Earth)<br>
+                    <strong>Mass:</strong> 1.989 × 10³⁰ kg (333,000 x Earth)<br>
+                    <strong>Density:</strong> 1.41 g/cm³<br>
+                    <strong>Surface Gravity:</strong> 274 m/s² (28 g)<br>
+                    <strong>Surface Temp:</strong> 5,500°C<br>
+                    <strong>Core Temp:</strong> 15,000,000°C<br>
+                    <strong>Rotation:</strong> ~27 days (Differential)<br>
+                    <strong>Age:</strong> 4.6 Billion Years<br>
+                </div>
             `;
         } else if (closestObject.type === 'planet') {
             let detailsHtml = '';
             if (data.details) {
                 detailsHtml = `
                     <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 5px 0;">
+                    <strong>Year:</strong> ${data.period.toFixed(1)} days<br>
                     <strong>Radius:</strong> ${data.radius} Earths<br>
                     <strong>Mass:</strong> ${data.details.mass}<br>
                     <strong>Density:</strong> ${data.details.density}<br>
