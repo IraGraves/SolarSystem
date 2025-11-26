@@ -195,13 +195,13 @@ export function updateMoonPositions(planet, expansionFactor, planetIndex, allPla
             // Calculate orbit distance in AU
             const orbitDistAU = Math.sqrt(moonState.x ** 2 + moonState.y ** 2 + moonState.z ** 2);
 
-            // Apply compression if needed
-            let finalOrbitAU = orbitDistAU;
+            // Apply compression if needed - compare SCALED orbit against max
+            let scaleFactor = 1.0;
             if (maxOrbitAU) {
-                finalOrbitAU = compressOrbit(orbitDistAU, maxOrbitAU);
+                const scaledOrbitAU = orbitDistAU * baseScale;
+                const compressedOrbitAU = compressOrbit(scaledOrbitAU, maxOrbitAU);
+                scaleFactor = compressedOrbitAU / scaledOrbitAU;
             }
-
-            const scaleFactor = finalOrbitAU / orbitDistAU;
 
             // Update orbit line scale
             if (m.data.orbitLine) {
@@ -218,13 +218,13 @@ export function updateMoonPositions(planet, expansionFactor, planetIndex, allPla
             // Calculate orbit distance in AU
             const orbitDistAU = Math.sqrt(moonVector.x ** 2 + moonVector.y ** 2 + moonVector.z ** 2);
 
-            // Apply compression if needed
-            let finalOrbitAU = orbitDistAU;
+            // Apply compression if needed - compare SCALED orbit against max
+            let scaleFactor = 1.0;
             if (maxOrbitAU) {
-                finalOrbitAU = compressOrbit(orbitDistAU, maxOrbitAU);
+                const scaledOrbitAU = orbitDistAU * baseScale;
+                const compressedOrbitAU = compressOrbit(scaledOrbitAU, maxOrbitAU);
+                scaleFactor = compressedOrbitAU / scaledOrbitAU;
             }
-
-            const scaleFactor = finalOrbitAU / orbitDistAU;
 
             // Update orbit line scale
             if (m.data.orbitLine) {
@@ -244,13 +244,13 @@ export function updateMoonPositions(planet, expansionFactor, planetIndex, allPla
             // Moon's orbit distance in AU
             const orbitDistAU = m.data.distance;
 
-            // Apply compression if needed
-            let finalOrbitAU = orbitDistAU;
+            // Apply compression if needed - compare SCALED orbit against max
+            let scaleFactor = 1.0;
             if (maxOrbitAU) {
-                finalOrbitAU = compressOrbit(orbitDistAU, maxOrbitAU);
+                const scaledOrbitAU = orbitDistAU * baseScale;
+                const compressedOrbitAU = compressOrbit(scaledOrbitAU, maxOrbitAU);
+                scaleFactor = compressedOrbitAU / scaledOrbitAU;
             }
-
-            const scaleFactor = finalOrbitAU / orbitDistAU;
 
             // Update orbit line scale
             if (m.data.orbitLine) {
