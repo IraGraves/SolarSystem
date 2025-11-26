@@ -25,6 +25,13 @@ export function setupTooltipSystem(camera, planets, sun, starsRef) {
         const mouseX = event.clientX;
         const mouseY = event.clientY;
 
+        // Block tooltips if hovering over the GUI
+        if (event.target.closest('.lil-gui')) {
+            tooltip.style.display = 'none';
+            document.body.style.cursor = 'default';
+            return;
+        }
+
         // Tooltip positioning is now handled after content update to ensure it stays on screen
 
         let closestObject = null;

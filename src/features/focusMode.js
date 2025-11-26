@@ -106,7 +106,7 @@ export function updateFocusMode(camera, controls) {
  * @param {THREE.Camera} camera - The scene camera
  * @param {Object} controls - OrbitControls instance
  */
-function focusOnObject(targetObject, camera, controls) {
+export function focusOnObject(targetObject, camera, controls) {
     focusedObject = targetObject;
 
     // Get the world position of the target
@@ -161,7 +161,7 @@ function focusOnObject(targetObject, camera, controls) {
  * Exits focus mode and returns control to the user
  * @param {Object} controls - OrbitControls instance
  */
-function exitFocusMode(controls) {
+export function exitFocusMode(controls) {
     focusedObject = null;
     controls.enabled = true;
     showFocusNotification('Focus mode deactivated');

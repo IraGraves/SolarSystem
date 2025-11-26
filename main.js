@@ -29,7 +29,7 @@ import { createRabbit } from './src/systems/rabbit.js';
         // 3. Setup GUI & Interactions (Immediate)
         loading.textContent = 'Setting up GUI...';
         const starsRef = { value: null }; // Placeholder for stars
-        const uiControls = setupGUI(planets, sun, orbitGroup, zodiacGroup, starsRef, renderer);
+        const uiControls = setupGUI(planets, sun, orbitGroup, zodiacGroup, starsRef, renderer, camera, controls);
         setupTooltipSystem(camera, planets, sun, starsRef);
         setupFocusMode(camera, controls, planets, sun);
         initializeMissions(scene);
