@@ -84,6 +84,12 @@ export function updateFocusMode(camera, controls) {
 
     // Follow the focused object
     if (focusedObject && !isAnimating) {
+        // Check if object became invisible
+        if (!focusedObject.mesh.visible) {
+            exitFocusMode(controls);
+            return;
+        }
+
         const targetMesh = focusedObject.mesh;
 
         // Get the world position of the target

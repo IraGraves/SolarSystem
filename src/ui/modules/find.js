@@ -58,18 +58,18 @@ export function setupFindFolder(gui, planets, sun, starsRef, camera, controls) {
         const matches = [];
 
         // 1. Search Sun
-        if ('sun'.includes(query)) {
+        if ('sun'.includes(query) && sun.visible) {
             matches.push({ name: 'Sun', type: 'Star', object: { mesh: sun, data: { name: 'Sun', radius: 5 }, type: 'sun' } });
         }
 
         // 2. Search Planets & Moons
         planets.forEach(p => {
-            if (p.data.name.toLowerCase().includes(query)) {
+            if (p.data.name.toLowerCase().includes(query) && p.mesh.visible) {
                 matches.push({ name: p.data.name, type: p.data.type === 'dwarf' ? 'Dwarf Planet' : 'Planet', object: { mesh: p.mesh, data: p.data, type: 'planet' } });
             }
             if (p.moons) {
                 p.moons.forEach(m => {
-                    if (m.data.name.toLowerCase().includes(query)) {
+                    if (m.data.name.toLowerCase().includes(query) && m.mesh.visible) {
                         matches.push({ name: m.data.name, type: 'Moon', object: { mesh: m.mesh, data: m.data, type: 'moon' } });
                     }
                 });
