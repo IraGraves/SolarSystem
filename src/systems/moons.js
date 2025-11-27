@@ -14,20 +14,6 @@ function getPlanetDistanceAU(planetData) {
 }
 
 /**
- * Compress moon orbit using logarithmic function
- */
-function compressOrbit(orbitSizeAU, maxOrbitAU) {
-    if (orbitSizeAU <= maxOrbitAU) return orbitSizeAU;
-
-    // Use logarithmic compression for orbits beyond max
-    const ratio = orbitSizeAU / maxOrbitAU;
-    const compressed = maxOrbitAU * (1 + Math.log(ratio) / Math.log(10));
-
-    // Hard cap at maxOrbit - strict boundary enforcement
-    return Math.min(compressed, maxOrbitAU);
-}
-
-/**
  * Creates moons for a planet
  * @param {Object} planetData - Data object for the parent planet
  * @param {THREE.Group} planetGroup - The parent planet's group
@@ -55,7 +41,6 @@ export function createMoons(planetData, planetGroup, orbitLinesGroup, textureLoa
             });
         }
         const moonMesh = new THREE.Mesh(moonGeo, moonMat);
-        console.log(`Creating moon: ${moonData.name}`); // Debug log
 
         // Apply initial scale
         moonMesh.scale.setScalar(config.planetScale);
@@ -165,99 +150,126 @@ export function createMoons(planetData, planetGroup, orbitLinesGroup, textureLoa
 export function updateMoonPositions(planet, expansionFactor, planetIndex, allPlanets) {
     if (!planet.moons) return;
 
-    // Calculate maximum orbit size if capping is enabled
-    let maxOrbitAU = null;
+    const baseScale = config.planetScale * REAL_PLANET_SCALE_FACTOR;
+
+    // Calculate lower and upper bounds for capping
+    let lowerBound = null;
+    let upperBound = null;
+
     if (config.capMoonOrbits) {
+        // Lower bound = 1.1 × planet diameter (in scene units)
+        const planetDiameter = planet.data.radius * 2 * config.planetScale;
+        lowerBound = planetDiameter * 1.1;
+
+        // Upper bound = half distance to next planet (in scene units)
         const currentDist = getPlanetDistanceAU(planet.data);
         if (currentDist && planetIndex < allPlanets.length - 1) {
             const nextPlanet = allPlanets[planetIndex + 1];
             const nextDist = getPlanetDistanceAU(nextPlanet.data);
             if (nextDist) {
-                // Use half the distance to next planet as maximum
-                maxOrbitAU = (nextDist - currentDist) / 2;
+                upperBound = ((nextDist - currentDist) / 2) * AU_TO_SCENE;
             }
         } else if (currentDist) {
-            // For last planet (Neptune), use 50% of its distance as cap
-            maxOrbitAU = currentDist * 0.5;
+            upperBound = (currentDist * 0.5) * AU_TO_SCENE;
+        }
+
+        // If lower > upper, set upper = lower
+        if (lowerBound && upperBound && lowerBound > upperBound) {
+            upperBound = lowerBound;
         }
     }
 
-    const baseScale = config.planetScale * REAL_PLANET_SCALE_FACTOR;
+    // PASS 1: Collect all moon orbits
+    const moonOrbits = [];
+    planet.moons.forEach(m => {
+        let orbitDist;
 
+        if (m.data.type === "jovian") {
+            const jm = Astronomy.JupiterMoons(config.date);
+            const moonState = [jm.io, jm.europa, jm.ganymede, jm.callisto][m.data.moonIndex];
+            orbitDist = Math.sqrt(moonState.x ** 2 + moonState.y ** 2 + moonState.z ** 2) * AU_TO_SCENE * baseScale;
+        } else if (m.data.type === "real") {
+            const moonVector = Astronomy.GeoVector(Astronomy.Body[m.data.body], config.date, true);
+            orbitDist = Math.sqrt(moonVector.x ** 2 + moonVector.y ** 2 + moonVector.z ** 2) * AU_TO_SCENE * baseScale;
+        } else {
+            orbitDist = m.data.distance * AU_TO_SCENE * baseScale;
+        }
+
+        moonOrbits.push(orbitDist);
+    });
+
+    // Calculate remapping parameters
+    let remapScale = 1.0;
+    let remapOffset = 0;
+
+    if (config.capMoonOrbits && lowerBound && upperBound && moonOrbits.length > 0) {
+        const minOrbit = Math.min(...moonOrbits);
+        const maxOrbit = Math.max(...moonOrbits);
+
+        if (maxOrbit > upperBound) {
+            // Remap from [0...maxOrbit] to [0...upperBound]
+            remapScale = upperBound / maxOrbit;
+            remapOffset = 0;
+        } else if (minOrbit < lowerBound) {
+            // Remap from [minOrbit...upperBound] to [lowerBound...upperBound]
+            const inputRange = upperBound - minOrbit;
+            const outputRange = upperBound - lowerBound;
+            remapScale = outputRange / inputRange;
+            remapOffset = lowerBound - (minOrbit * remapScale);
+        }
+    }
+
+    // PASS 2: Apply remapping to all moons
     planet.moons.forEach(m => {
         let xOffset, yOffset, zOffset;
 
         if (m.data.type === "jovian") {
-            // Jupiter's Galilean moons
             const jm = Astronomy.JupiterMoons(config.date);
             const moonState = [jm.io, jm.europa, jm.ganymede, jm.callisto][m.data.moonIndex];
 
-            // Calculate orbit distance in AU
-            const orbitDistAU = Math.sqrt(moonState.x ** 2 + moonState.y ** 2 + moonState.z ** 2);
+            const baseOrbitDist = Math.sqrt(moonState.x ** 2 + moonState.y ** 2 + moonState.z ** 2);
+            const scaledOrbitDist = baseOrbitDist * AU_TO_SCENE * baseScale;
+            const remappedOrbitDist = (scaledOrbitDist * remapScale) + remapOffset;
+            const finalScale = remappedOrbitDist / (baseOrbitDist * AU_TO_SCENE);
 
-            // Apply compression if needed - compare SCALED orbit against max
-            let scaleFactor = 1.0;
-            if (maxOrbitAU) {
-                const scaledOrbitAU = orbitDistAU * baseScale;
-                const compressedOrbitAU = compressOrbit(scaledOrbitAU, maxOrbitAU);
-                scaleFactor = compressedOrbitAU / scaledOrbitAU;
-            }
-
-            // Update orbit line scale
             if (m.data.orbitLine) {
-                m.data.orbitLine.scale.setScalar(baseScale * scaleFactor);
+                m.data.orbitLine.scale.setScalar(finalScale);
             }
 
-            xOffset = moonState.x * AU_TO_SCENE * baseScale * scaleFactor;
-            zOffset = -moonState.y * AU_TO_SCENE * baseScale * scaleFactor;
-            yOffset = moonState.z * AU_TO_SCENE * baseScale * scaleFactor;
+            xOffset = moonState.x * AU_TO_SCENE * finalScale;
+            zOffset = -moonState.y * AU_TO_SCENE * finalScale;
+            yOffset = moonState.z * AU_TO_SCENE * finalScale;
         } else if (m.data.type === "real") {
-            // Earth's Moon
             const moonVector = Astronomy.GeoVector(Astronomy.Body[m.data.body], config.date, true);
 
-            // Calculate orbit distance in AU
-            const orbitDistAU = Math.sqrt(moonVector.x ** 2 + moonVector.y ** 2 + moonVector.z ** 2);
+            const baseOrbitDist = Math.sqrt(moonVector.x ** 2 + moonVector.y ** 2 + moonVector.z ** 2);
+            const scaledOrbitDist = baseOrbitDist * AU_TO_SCENE * baseScale;
+            const remappedOrbitDist = (scaledOrbitDist * remapScale) + remapOffset;
+            const finalScale = remappedOrbitDist / (baseOrbitDist * AU_TO_SCENE);
 
-            // Apply compression if needed - compare SCALED orbit against max
-            let scaleFactor = 1.0;
-            if (maxOrbitAU) {
-                const scaledOrbitAU = orbitDistAU * baseScale;
-                const compressedOrbitAU = compressOrbit(scaledOrbitAU, maxOrbitAU);
-                scaleFactor = compressedOrbitAU / scaledOrbitAU;
-            }
-
-            // Update orbit line scale
             if (m.data.orbitLine) {
-                m.data.orbitLine.scale.setScalar(baseScale * scaleFactor);
+                m.data.orbitLine.scale.setScalar(finalScale);
             }
 
-            xOffset = moonVector.x * AU_TO_SCENE * baseScale * scaleFactor;
-            zOffset = -moonVector.y * AU_TO_SCENE * baseScale * scaleFactor;
-            yOffset = moonVector.z * AU_TO_SCENE * baseScale * scaleFactor;
+            xOffset = moonVector.x * AU_TO_SCENE * finalScale;
+            zOffset = -moonVector.y * AU_TO_SCENE * finalScale;
+            yOffset = moonVector.z * AU_TO_SCENE * finalScale;
         } else {
-            // Simple moons (Titan, etc)
+            const baseOrbitDist = m.data.distance;
+            const scaledOrbitDist = baseOrbitDist * AU_TO_SCENE * baseScale;
+            const remappedOrbitDist = (scaledOrbitDist * remapScale) + remapOffset;
+            const finalScale = remappedOrbitDist / (baseOrbitDist * AU_TO_SCENE);
+
             const epoch = new Date(2000, 0, 1).getTime();
             const currentTime = config.date.getTime();
             const daysSinceEpoch = (currentTime - epoch) / (24 * 60 * 60 * 1000);
             const angle = (daysSinceEpoch * 2 * Math.PI) / m.data.period;
 
-            // Moon's orbit distance in AU
-            const orbitDistAU = m.data.distance;
-
-            // Apply compression if needed - compare SCALED orbit against max
-            let scaleFactor = 1.0;
-            if (maxOrbitAU) {
-                const scaledOrbitAU = orbitDistAU * baseScale;
-                const compressedOrbitAU = compressOrbit(scaledOrbitAU, maxOrbitAU);
-                scaleFactor = compressedOrbitAU / scaledOrbitAU;
-            }
-
-            // Update orbit line scale
             if (m.data.orbitLine) {
-                m.data.orbitLine.scale.setScalar(baseScale * scaleFactor);
+                m.data.orbitLine.scale.setScalar(finalScale);
             }
 
-            const radius = orbitDistAU * AU_TO_SCENE * baseScale * scaleFactor;
+            const radius = remappedOrbitDist;
             xOffset = Math.cos(angle) * radius;
             zOffset = Math.sin(angle) * radius;
             yOffset = 0;
