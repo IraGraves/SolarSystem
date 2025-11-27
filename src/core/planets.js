@@ -8,6 +8,46 @@ import { createRing } from '../systems/rings.js';
 import { createMoons, updateMoonPositions } from '../systems/moons.js';
 import { createOrbitLine } from '../systems/orbits.js';
 
+// --- Planet Creation Helper Functions ---
+
+/**
+ * Creates the Sun mesh with texture and axis line
+ * @param {THREE.Scene} scene - The Three.js scene
+ * @param {THREE.TextureLoader} textureLoader - Shared texture loader
+ * @returns {THREE.Mesh} Sun mesh
+ */
+function createSun(scene, textureLoader) {
+    const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
+    const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // Start yellow
+
+    textureLoader.load(`${import.meta.env.BASE_URL}assets/textures/sun.jpg`, (texture) => {
+        sunMaterial.map = texture;
+        sunMaterial.color.setHex(0xffffff);
+        sunMaterial.needsUpdate = true;
+    });
+
+    const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+    scene.add(sun);
+
+    // Create sun axis line
+    const sunAxisLength = 5 * 2.5;
+    const sunAxisGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, -sunAxisLength, 0),
+        new THREE.Vector3(0, sunAxisLength, 0)
+    ]);
+    const sunAxisMat = new THREE.LineBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.5
+    });
+    const sunAxisLine = new THREE.Line(sunAxisGeo, sunAxisMat);
+    sunAxisLine.visible = config.showAxes;
+    sun.add(sunAxisLine);
+    sun.axisLine = sunAxisLine;
+
+    return sun;
+}
+
 /**
  * Creates all planet and moon meshes with their orbit lines
  * 
@@ -20,28 +60,8 @@ export function createPlanets(scene, orbitGroup) {
     const dwarfPlanets = []; // Separate array for toggling
     const textureLoader = new THREE.TextureLoader();
 
-    // Sun
-    const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
-    const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // Start yellow
-    textureLoader.load(`${import.meta.env.BASE_URL}assets/textures/sun.jpg`, (texture) => {
-        sunMaterial.map = texture;
-        sunMaterial.color.setHex(0xffffff);
-        sunMaterial.needsUpdate = true;
-    });
-    const sun = new THREE.Mesh(sunGeometry, sunMaterial);
-    scene.add(sun);
-
-    // Create sun axis line
-    const sunAxisLength = 5 * 2.5;
-    const sunAxisGeo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, -sunAxisLength, 0),
-        new THREE.Vector3(0, sunAxisLength, 0)
-    ]);
-    const sunAxisMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
-    const sunAxisLine = new THREE.Line(sunAxisGeo, sunAxisMat);
-    sunAxisLine.visible = config.showAxes;
-    sun.add(sunAxisLine);
-    sun.axisLine = sunAxisLine;
+    // Create Sun
+    const sun = createSun(scene, textureLoader);
 
     // Combine data for creation loop
     const allBodies = [...planetData, ...dwarfPlanetData];
@@ -151,12 +171,14 @@ export function createPlanets(scene, orbitGroup) {
 export function updatePlanets(planets, sun = null) {
     // Update Sun rotation
     if (sun) {
+        // J2000 epoch: Standard astronomical reference point (Jan 1, 2000, 12:00 UTC)
         const J2000 = new Date('2000-01-01T12:00:00Z').getTime();
         const currentMs = config.date.getTime();
         const hoursSinceJ2000 = (currentMs - J2000) / (1000 * 60 * 60);
 
         // Sun's rotation period is approximately 25 days (600 hours) at the equator
         const sunRotationPeriod = 600; // hours
+        // Calculate rotation: (elapsed hours / period) * full rotation (2π radians)
         const sunRotationAngle = (hoursSinceJ2000 / sunRotationPeriod) * 2 * Math.PI;
         sun.rotation.y = sunRotationAngle;
     }
@@ -170,9 +192,10 @@ export function updatePlanets(planets, sun = null) {
             p.mesh.position.y = vector.z * AU_TO_SCENE;
         } else if (p.data.elements) {
             // Custom Keplerian bodies (Ceres, Haumea, Makemake, Eris)
+            // Use orbital elements to calculate position analytically
             const pos = calculateKeplerianPosition(p.data.elements, config.date);
             p.mesh.position.x = pos.x * AU_TO_SCENE;
-            p.mesh.position.z = -pos.y * AU_TO_SCENE; // Swap Y/Z for Three.js
+            p.mesh.position.z = -pos.y * AU_TO_SCENE; // Swap Y/Z for Three.js coordinate system
         }
 
         if (!config.stop && p.data.cloudMesh) {
@@ -192,12 +215,13 @@ export function updatePlanets(planets, sun = null) {
 
         // Apply rotation
         if (p.data.rotationPeriod) {
-            // Calculate rotation based on time
+            // Calculate deterministic rotation based on time since J2000 epoch
             const J2000 = new Date('2000-01-01T12:00:00Z').getTime();
             const currentMs = config.date.getTime();
             const hoursSinceJ2000 = (currentMs - J2000) / (1000 * 60 * 60);
 
-            // rotationPeriod is in hours
+            // rotationPeriod is in hours (e.g., Earth = 24 hours)
+            // Formula: angle = (elapsed / period) * 2π
             const rotationAngle = (hoursSinceJ2000 / p.data.rotationPeriod) * 2 * Math.PI;
             p.mesh.rotation.y = rotationAngle;
         }

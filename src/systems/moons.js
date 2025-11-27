@@ -13,6 +13,169 @@ function getPlanetDistanceAU(planetData) {
     return Math.pow(periodYears, 2 / 3);
 }
 
+// --- Moon Creation Helper Functions ---
+
+/**
+ * Creates a moon mesh with texture support
+ * @param {Object} moonData - Moon data object
+ * @param {THREE.TextureLoader} textureLoader - Shared texture loader
+ * @returns {THREE.Mesh} Moon mesh
+ */
+function createMoonMesh(moonData, textureLoader) {
+    const moonGeo = new THREE.SphereGeometry(moonData.radius, 16, 16);
+    // Start with base color
+    const moonMat = new THREE.MeshStandardMaterial({ color: moonData.color });
+
+    if (moonData.texture) {
+        textureLoader.load(moonData.texture, (texture) => {
+            moonMat.map = texture;
+            moonMat.color.setHex(0xffffff); // Reset to white so texture colors show
+            moonMat.needsUpdate = true;
+        }, undefined, (err) => {
+            console.error(`Error loading texture for moon ${moonData.name}:`, err);
+            // Keep base color on error
+        });
+    }
+
+    const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+
+    // Apply initial scale
+    moonMesh.scale.setScalar(config.planetScale);
+
+    if (moonData.axialTilt !== undefined && !moonData.tidallyLocked) {
+        const tiltRadians = (moonData.axialTilt * Math.PI) / 180;
+        moonMesh.rotation.z = tiltRadians;
+    }
+
+    return moonMesh;
+}
+
+/**
+ * Adds rotation axis line to a moon mesh
+ * @param {THREE.Mesh} moonMesh - Moon mesh
+ * @param {Object} moonData - Moon data object
+ */
+function addAxisLine(moonMesh, moonData) {
+    const moonAxisLength = moonData.radius * 2.5;
+    const moonAxisGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, -moonAxisLength, 0),
+        new THREE.Vector3(0, moonAxisLength, 0)
+    ]);
+    const moonAxisMat = new THREE.LineBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.5
+    });
+    const moonAxisLine = new THREE.Line(moonAxisGeo, moonAxisMat);
+    moonAxisLine.visible = config.showAxes;
+    moonMesh.add(moonAxisLine);
+    moonData.axisLine = moonAxisLine;
+}
+
+/**
+ * Creates orbit line for Jovian moons (Jupiter's Galilean moons)
+ * @param {Object} moonData - Moon data object
+ * @param {THREE.Group} orbitLinesGroup - Group for moon orbit lines
+ */
+function createJovianOrbitLine(moonData, orbitLinesGroup) {
+    const orbitPoints = [];
+    const steps = 90;
+    const startTime = new Date();
+    const periodDays = moonData.period;
+
+    for (let i = 0; i < steps; i++) {
+        const t = new Date(startTime.getTime() + (i / steps) * periodDays * 24 * 60 * 60 * 1000);
+        const jm = Astronomy.JupiterMoons(t);
+        const moonState = [jm.io, jm.europa, jm.ganymede, jm.callisto][moonData.moonIndex];
+        // Store base points without scaling (use AU_TO_SCENE only)
+        orbitPoints.push(new THREE.Vector3(
+            moonState.x * AU_TO_SCENE,
+            moonState.z * AU_TO_SCENE,
+            -moonState.y * AU_TO_SCENE
+        ));
+    }
+
+    // Save base points for later scaling
+    moonData._orbitBasePoints = orbitPoints;
+
+    // Create geometry at 1x scale
+    const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+    const orbitMat = new THREE.LineBasicMaterial({
+        color: 0x666666,
+        transparent: true,
+        opacity: 0.3
+    });
+    const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
+    orbitLinesGroup.add(orbitLine);
+    moonData.orbitLine = orbitLine;
+}
+
+/**
+ * Creates orbit line for simple circular orbit moons
+ * @param {Object} moonData - Moon data object
+ * @param {THREE.Group} orbitLinesGroup - Group for moon orbit lines
+ */
+function createSimpleOrbitLine(moonData, orbitLinesGroup) {
+    const orbitPoints = [];
+    const radiusBase = moonData.distance * AU_TO_SCENE;
+
+    for (let i = 0; i < 64; i++) {
+        const angle = (i / 64) * Math.PI * 2;
+        orbitPoints.push(new THREE.Vector3(
+            Math.cos(angle) * radiusBase,
+            0,
+            Math.sin(angle) * radiusBase
+        ));
+    }
+
+    // Save base points for scaling later
+    moonData._orbitBasePoints = orbitPoints;
+
+    // Create geometry at 1x scale
+    const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+    const orbitMat = new THREE.LineBasicMaterial({
+        color: 0x666666,
+        transparent: true,
+        opacity: 0.3
+    });
+    const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
+    orbitLinesGroup.add(orbitLine);
+    moonData.orbitLine = orbitLine;
+}
+
+/**
+ * Creates orbit line for real moons (Earth's Moon)
+ * @param {Object} moonData - Moon data object
+ * @param {THREE.Group} orbitLinesGroup - Group for moon orbit lines
+ */
+function createRealOrbitLine(moonData, orbitLinesGroup) {
+    const points = [];
+    const steps = 90;
+    const startTime = new Date();
+    const periodDays = moonData.period || 27.3;
+
+    for (let i = 0; i < steps; i++) {
+        const t = new Date(startTime.getTime() + (i / steps) * periodDays * 24 * 60 * 60 * 1000);
+        const vec = Astronomy.GeoVector(Astronomy.Body[moonData.body], t, true);
+        points.push(new THREE.Vector3(
+            vec.x * AU_TO_SCENE,
+            vec.z * AU_TO_SCENE,
+            -vec.y * AU_TO_SCENE
+        ));
+    }
+
+    // Create geometry at 1x scale
+    const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
+    const orbitMat = new THREE.LineBasicMaterial({
+        color: 0x888888,
+        transparent: true,
+        opacity: 0.5
+    });
+    const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
+    orbitLinesGroup.add(orbitLine);
+    moonData.orbitLine = orbitLine;
+}
+
 /**
  * Creates moons for a planet
  * @param {Object} planetData - Data object for the parent planet
@@ -26,112 +189,21 @@ export function createMoons(planetData, planetGroup, orbitLinesGroup, textureLoa
     if (!planetData.moons) return moons;
 
     planetData.moons.forEach(moonData => {
-        const moonGeo = new THREE.SphereGeometry(moonData.radius, 16, 16);
-        // Start with base color
-        const moonMat = new THREE.MeshStandardMaterial({ color: moonData.color });
+        // Create moon mesh (common for all types)
+        const moonMesh = createMoonMesh(moonData, textureLoader);
+        addAxisLine(moonMesh, moonData);
 
-        if (moonData.texture) {
-            textureLoader.load(moonData.texture, (texture) => {
-                moonMat.map = texture;
-                moonMat.color.setHex(0xffffff); // Reset to white so texture colors show
-                moonMat.needsUpdate = true;
-            }, undefined, (err) => {
-                console.error(`Error loading texture for moon ${moonData.name}:`, err);
-                // Keep base color on error
-            });
-        }
-        const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+        // Add to planet group (all moons)
+        planetGroup.add(moonMesh);
 
-        // Apply initial scale
-        moonMesh.scale.setScalar(config.planetScale);
-
-        if (moonData.axialTilt !== undefined && !moonData.tidallyLocked) {
-            const tiltRadians = (moonData.axialTilt * Math.PI) / 180;
-            moonMesh.rotation.z = tiltRadians;
-        }
-
-        // Create moon axis line
-        const moonAxisLength = moonData.radius * 2.5;
-        const moonAxisGeo = new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(0, -moonAxisLength, 0),
-            new THREE.Vector3(0, moonAxisLength, 0)
-        ]);
-        const moonAxisMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
-        const moonAxisLine = new THREE.Line(moonAxisGeo, moonAxisMat);
-        moonAxisLine.visible = config.showAxes;
-        moonMesh.add(moonAxisLine);
-        moonData.axisLine = moonAxisLine;
-
+        // Create orbit line based on moon type
         if (moonData.type === "jovian") {
-            // Jupiter's Galilean moons - add to planetGroup to avoid rotation
-            planetGroup.add(moonMesh);
-
-            const orbitPoints = [];
-            const steps = 90;
-            const startTime = new Date();
-            const periodDays = moonData.period;
-
-            for (let i = 0; i < steps; i++) {
-                const t = new Date(startTime.getTime() + (i / steps) * periodDays * 24 * 60 * 60 * 1000);
-                const jm = Astronomy.JupiterMoons(t);
-                const moonState = [jm.io, jm.europa, jm.ganymede, jm.callisto][moonData.moonIndex];
-                // Store base points without scaling (use AU_TO_SCENE only)
-                orbitPoints.push(new THREE.Vector3(
-                    moonState.x * AU_TO_SCENE,
-                    moonState.z * AU_TO_SCENE,
-                    -moonState.y * AU_TO_SCENE
-                ));
-            }
-            // Save base points for later scaling
-            moonData._orbitBasePoints = orbitPoints;
-            // Create geometry at 1x scale
-            const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
-            const orbitMat = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.3 });
-            const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
-            orbitLinesGroup.add(orbitLine);
-            moonData.orbitLine = orbitLine;
+            createJovianOrbitLine(moonData, orbitLinesGroup);
         } else if (moonData.type === "simple") {
-            // Simple circular orbit - add to planetGroup to avoid rotation
-            planetGroup.add(moonMesh);
-
-            const orbitPoints = [];
-            const radiusBase = moonData.distance * AU_TO_SCENE;
-            for (let i = 0; i < 64; i++) {
-                const angle = (i / 64) * Math.PI * 2;
-                orbitPoints.push(new THREE.Vector3(Math.cos(angle) * radiusBase, 0, Math.sin(angle) * radiusBase));
-            }
-            // Save base points for scaling later
-            moonData._orbitBasePoints = orbitPoints;
-            // Create geometry at 1x scale
-            const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
-            const orbitMat = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.3 });
-            const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
-            orbitLinesGroup.add(orbitLine);
-            moonData.orbitLine = orbitLine;
+            createSimpleOrbitLine(moonData, orbitLinesGroup);
         } else {
-            // Earth's Moon - add to planetGroup to avoid rotation
-            planetGroup.add(moonMesh);
-
-            const points = [];
-            const steps = 90;
-            const startTime = new Date();
-            const periodDays = moonData.period || 27.3;
-
-            for (let i = 0; i < steps; i++) {
-                const t = new Date(startTime.getTime() + (i / steps) * periodDays * 24 * 60 * 60 * 1000);
-                const vec = Astronomy.GeoVector(Astronomy.Body[moonData.body], t, true);
-                points.push(new THREE.Vector3(
-                    vec.x * AU_TO_SCENE,
-                    vec.z * AU_TO_SCENE,
-                    -vec.y * AU_TO_SCENE
-                ));
-            }
-            // Create geometry at 1x scale
-            const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
-            const orbitMat = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.5 });
-            const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
-            orbitLinesGroup.add(orbitLine);
-            moonData.orbitLine = orbitLine;
+            // Earth's Moon and other real moons
+            createRealOrbitLine(moonData, orbitLinesGroup);
         }
 
         moons.push({ mesh: moonMesh, data: moonData });
@@ -139,6 +211,7 @@ export function createMoons(planetData, planetGroup, orbitLinesGroup, textureLoa
 
     return moons;
 }
+
 
 /**
  * Updates moon positions and orbit lines
@@ -149,6 +222,8 @@ export function createMoons(planetData, planetGroup, orbitLinesGroup, textureLoa
 export function updateMoonPositions(planet, planetIndex, allPlanets) {
     if (!planet.moons) return;
 
+    // Calculate compound scale: slider value (0.002-5.0) × artistic factor (500x)
+    // Example: slider at 1.0 → 1.0 × 500 = 500x realistic size
     const baseScale = config.planetScale * REAL_PLANET_SCALE_FACTOR;
 
     // Calculate lower and upper bounds for capping
@@ -156,7 +231,7 @@ export function updateMoonPositions(planet, planetIndex, allPlanets) {
     let upperBound = null;
 
     if (config.capMoonOrbits) {
-        // Lower bound = 1.1 × planet radius (in scene units)
+        // Lower bound = 1.1 × planet radius (prevents moons from appearing inside planet)
         const planetRadius = planet.data.radius * config.planetScale;
         lowerBound = planetRadius * 1.1;
 
@@ -237,11 +312,13 @@ export function updateMoonPositions(planet, planetIndex, allPlanets) {
         // Check if we need to remap (if exceeding upper OR below lower)
         if (maxOrbit > upperBound || minOrbit < lowerBound) {
             // Robust Remapping: Map [minOrbit...maxOrbit] to [lowerBound...upperBound]
+            // This linear transformation: newOrbit = (oldOrbit * remapScale) + remapOffset
             const inputRange = maxOrbit - minOrbit;
             const outputRange = upperBound - lowerBound;
 
             // Avoid division by zero if only one moon or min == max
             if (inputRange > 0.0001) {
+                // Calculate linear transformation coefficients
                 remapScale = outputRange / inputRange;
                 remapOffset = lowerBound - (minOrbit * remapScale);
             } else {
@@ -261,9 +338,11 @@ export function updateMoonPositions(planet, planetIndex, allPlanets) {
             const jm = Astronomy.JupiterMoons(config.date);
             const moonState = [jm.io, jm.europa, jm.ganymede, jm.callisto][m.data.moonIndex];
 
+            // Calculate orbit distance: astronomical units → scene units → scaled → remapped
             const baseOrbitDist = Math.sqrt(moonState.x ** 2 + moonState.y ** 2 + moonState.z ** 2);
             const scaledOrbitDist = baseOrbitDist * AU_TO_SCENE * baseScale;
             const remappedOrbitDist = (scaledOrbitDist * remapScale) + remapOffset;
+            // Back-calculate the final scale factor to apply to base coordinates
             const finalScale = remappedOrbitDist / (baseOrbitDist * AU_TO_SCENE);
 
             if (m.data.orbitLine) {
@@ -314,7 +393,8 @@ export function updateMoonPositions(planet, planetIndex, allPlanets) {
         m.mesh.position.z = planet.mesh.position.z + zOffset;
         m.mesh.position.y = planet.mesh.position.y + yOffset;
 
-        // Apply tidal locking
+        // Apply tidal locking: rotate moon to always face parent planet
+        // atan2(x, z) gives angle in XZ plane, +π rotates 180° to face inward
         if (m.data.tidallyLocked) {
             m.mesh.rotation.y = Math.atan2(xOffset, zOffset) + Math.PI;
         }

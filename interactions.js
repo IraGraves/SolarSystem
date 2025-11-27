@@ -82,14 +82,16 @@ export function setupTooltipSystem(camera, planets, sun, starsRef) {
                     const starPos = new THREE.Vector3(x, y, z);
 
                     // Project star position to screen space
-                    // We clone to avoid modifying the original vector
+                    // This converts 3D world coordinates to 2D screen coordinates
                     const projected = starPos.clone().project(camera);
 
-                    // Check if star is in front of camera
+                    // Check if star is in front of camera (between near and far planes)
                     if (projected.z < 1 && projected.z > -1) {
+                        // Convert normalized coordinates (-1 to 1) to pixel coordinates
                         const screenX = (projected.x * 0.5 + 0.5) * window.innerWidth;
                         const screenY = (-(projected.y * 0.5) + 0.5) * window.innerHeight;
 
+                        // Calculate distance from mouse to star in screen-space (pixels)
                         const dx = mouseX - screenX;
                         const dy = mouseY - screenY;
                         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -163,6 +165,177 @@ function getObjectData(mesh, planets, sun) {
     return null;
 }
 
+// --- Tooltip Helper Functions ---
+
+/**
+ * Builds HTML tooltip from structured data
+ * @param {string} title - Tooltip title
+ * @param {Array<{label: string, value: string}>} fields - Array of field objects
+ * @param {string} [liveSection] - Optional HTML for live data section
+ * @returns {string} HTML string
+ */
+function buildTooltip(title, fields, liveSection = null) {
+    let html = `<div style="min-width: 200px;">`;
+    html += `<strong style="font-size: 1.1em;">${title}</strong><br>`;
+
+    if (fields.length > 0) {
+        html += `<hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 5px 0;">`;
+        fields.forEach(field => {
+            html += `<strong>${field.label}:</strong> ${field.value}<br>`;
+        });
+    }
+
+    if (liveSection) {
+        html += liveSection;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+/**
+ * Calculates live astronomical data for a planet
+ * @param {Object} data - Planet data
+ * @returns {Object|null} Live data object or null if not available
+ */
+function calculatePlanetLiveData(data) {
+    if (!data.body || !Astronomy?.Body?.[data.body]) {
+        return null;
+    }
+
+    try {
+        const date = config.date instanceof Date ? config.date : new Date();
+        const body = Astronomy.Body[data.body];
+
+        // Live Calculations
+        const elements = Astronomy.OrbitalElements(body, date);
+        const helio = Astronomy.HelioVector(body, date);
+        const geo = Astronomy.GeoVector(body, date);
+
+        const trueAnomaly = elements.nu.toFixed(1);
+        // Calculate velocity magnitude in AU/day, then convert to km/s
+        const vAuDay = Math.sqrt(helio.vx ** 2 + helio.vy ** 2 + helio.vz ** 2);
+        const vKmS = (vAuDay * 149597870.7 / 86400).toFixed(2); // 1 AU = 149,597,870.7 km
+        const distAu = Math.sqrt(geo.x ** 2 + geo.y ** 2 + geo.z ** 2);
+        // Light travel time: 1 AU = 499.00478 seconds
+        const lightTimeMin = (distAu * 499.00478 / 60).toFixed(2);
+
+        return {
+            trueAnomaly,
+            velocity: vKmS,
+            distanceAU: distAu.toFixed(3),
+            lightTime: lightTimeMin
+        };
+    } catch (e) {
+        console.warn(`Error calculating live data for ${data.name}`, e);
+        return null;
+    }
+}
+
+/**
+ * Formats live data section HTML
+ * @param {Object} liveData - Live data object with trueAnomaly, velocity, distanceAU, lightTime
+ * @returns {string} HTML string
+ */
+function formatLiveDataSection(liveData) {
+    return `
+        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); padding: 5px; border-radius: 4px;">
+            <strong style="color: #aaf;">LIVE DATA</strong><br>
+            <strong>True Anomaly:</strong> ${liveData.trueAnomaly}°<br>
+            <strong>Heliocentric Velocity:</strong> ${liveData.velocity} km/s<br>
+            <strong>Distance to Earth:</strong> ${liveData.distanceAU} AU<br>
+            <strong>Light Time:</strong> ${liveData.lightTime} min<br>
+        </div>
+    `;
+}
+
+// --- Type-Specific Formatters ---
+
+/**
+ * Formats tooltip for the Sun
+ * @returns {string} HTML string
+ */
+function formatSunTooltip() {
+    return buildTooltip('Sun', [
+        { label: 'Type', value: 'G-type Main Sequence Star (G2V)' },
+        { label: 'Radius', value: '696,340 km (109 x Earth)' },
+        { label: 'Mass', value: '1.989 × 10³⁰ kg (333,000 x Earth)' },
+        { label: 'Density', value: '1.41 g/cm³' },
+        { label: 'Surface Gravity', value: '274 m/s² (28 g)' },
+        { label: 'Surface Temp', value: '5,500°C' },
+        { label: 'Core Temp', value: '15,000,000°C' },
+        { label: 'Rotation', value: '~27 days (Differential)' },
+        { label: 'Age', value: '4.6 Billion Years' }
+    ]);
+}
+
+/**
+ * Formats tooltip for a planet
+ * @param {Object} data - Planet data object
+ * @returns {string} HTML string
+ */
+function formatPlanetTooltip(data) {
+    const fields = [
+        { label: 'Type', value: data.type === 'dwarf' ? 'Dwarf Planet' : 'Planet' }
+    ];
+
+    // Add detailed fields if available
+    if (data.details) {
+        fields.push(
+            { label: 'Year', value: `${data.period.toFixed(1)} days` },
+            { label: 'Radius', value: `${data.radius} Earths` },
+            { label: 'Mass', value: data.details.mass },
+            { label: 'Density', value: data.details.density },
+            { label: 'Gravity', value: data.details.gravity },
+            { label: 'Albedo', value: data.details.albedo },
+            { label: 'Surface Temp', value: data.details.temp },
+            { label: 'Surface Pressure', value: data.details.pressure },
+            { label: 'Solar Day', value: data.details.solarDay },
+            { label: 'Sidereal Day', value: data.details.siderealDay },
+            { label: 'Axial Tilt', value: `${data.axialTilt}°` },
+            { label: 'Eccentricity', value: data.details.eccentricity },
+            { label: 'Inclination', value: data.details.inclination }
+        );
+    }
+
+    // Calculate and format live data if applicable
+    const liveData = calculatePlanetLiveData(data);
+    const liveSection = liveData ? formatLiveDataSection(liveData) : null;
+
+    return buildTooltip(data.name, fields, liveSection);
+}
+
+/**
+ * Formats tooltip for a moon
+ * @param {Object} data - Moon data object
+ * @returns {string} HTML string
+ */
+function formatMoonTooltip(data) {
+    return buildTooltip(data.name, [
+        { label: 'Type', value: 'Moon' },
+        { label: 'Orbital Period', value: `${data.period.toFixed(1)} days` }
+    ]);
+}
+
+/**
+ * Formats tooltip for a star
+ * @param {Object} data - Star data object
+ * @returns {string} HTML string
+ */
+function formatStarTooltip(data) {
+    const distance = data.distance ? (data.distance * 3.26156).toFixed(1) : "N/A";
+    const luminosity = data.radius ? data.radius.toFixed(1) : "N/A";
+    const name = data.name || `HD ${data.id}`;
+    const type = data.spectralType || "Unknown";
+
+    return buildTooltip(name, [
+        { label: 'Distance', value: `${distance} LY` },
+        { label: 'Type', value: type },
+        { label: 'Luminosity', value: luminosity },
+        { label: 'Catalog ID', value: data.id }
+    ]);
+}
+
 /**
  * Formats the tooltip HTML based on the object type
  * @param {Object} closestObject - Object containing data and type
@@ -172,106 +345,21 @@ function formatTooltip(closestObject) {
     try {
         const data = closestObject.data;
 
-        if (closestObject.type === 'sun') {
-            return `
-                <div style="min-width: 200px;">
-                    <strong style="font-size: 1.1em;">Sun</strong><br>
-                    <strong>Type:</strong> G-type Main Sequence Star (G2V)<br>
-                    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 5px 0;">
-                    <strong>Radius:</strong> 696,340 km (109 x Earth)<br>
-                    <strong>Mass:</strong> 1.989 × 10³⁰ kg (333,000 x Earth)<br>
-                    <strong>Density:</strong> 1.41 g/cm³<br>
-                    <strong>Surface Gravity:</strong> 274 m/s² (28 g)<br>
-                    <strong>Surface Temp:</strong> 5,500°C<br>
-                    <strong>Core Temp:</strong> 15,000,000°C<br>
-                    <strong>Rotation:</strong> ~27 days (Differential)<br>
-                    <strong>Age:</strong> 4.6 Billion Years<br>
-                </div>
-            `;
-        } else if (closestObject.type === 'planet') {
-            let detailsHtml = '';
-            if (data.details) {
-                detailsHtml = `
-                    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 5px 0;">
-                    <strong>Year:</strong> ${data.period.toFixed(1)} days<br>
-                    <strong>Radius:</strong> ${data.radius} Earths<br>
-                    <strong>Mass:</strong> ${data.details.mass}<br>
-                    <strong>Density:</strong> ${data.details.density}<br>
-                    <strong>Gravity:</strong> ${data.details.gravity}<br>
-                    <strong>Albedo:</strong> ${data.details.albedo}<br>
-                    <strong>Surface Temp:</strong> ${data.details.temp}<br>
-                    <strong>Surface Pressure:</strong> ${data.details.pressure}<br>
-                    <strong>Solar Day:</strong> ${data.details.solarDay}<br>
-                    <strong>Sidereal Day:</strong> ${data.details.siderealDay}<br>
-                    <strong>Axial Tilt:</strong> ${data.axialTilt}°<br>
-                    <strong>Eccentricity:</strong> ${data.details.eccentricity}<br>
-                    <strong>Inclination:</strong> ${data.details.inclination}<br>
-                `;
-            }
-
-            let liveHtml = '';
-            // Check if we have a valid body identifier and Astronomy engine is available
-            if (data.body && Astronomy && Astronomy.Body && Astronomy.Body[data.body]) {
-                try {
-                    const date = config.date instanceof Date ? config.date : new Date();
-                    const body = Astronomy.Body[data.body];
-
-                    // Live Calculations
-                    const elements = Astronomy.OrbitalElements(body, date);
-                    const helio = Astronomy.HelioVector(body, date);
-                    const geo = Astronomy.GeoVector(body, date);
-
-                    const trueAnomaly = elements.nu.toFixed(1);
-                    const vAuDay = Math.sqrt(helio.vx ** 2 + helio.vy ** 2 + helio.vz ** 2);
-                    const vKmS = (vAuDay * 149597870.7 / 86400).toFixed(2);
-                    const distAu = Math.sqrt(geo.x ** 2 + geo.y ** 2 + geo.z ** 2);
-                    const lightTimeMin = (distAu * 499.00478 / 60).toFixed(2);
-
-                    liveHtml = `
-                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); padding: 5px; border-radius: 4px;">
-                            <strong style="color: #aaf;">LIVE DATA</strong><br>
-                            <strong>True Anomaly:</strong> ${trueAnomaly}°<br>
-                            <strong>Heliocentric Velocity:</strong> ${vKmS} km/s<br>
-                            <strong>Distance to Earth:</strong> ${distAu.toFixed(3)} AU<br>
-                            <strong>Light Time:</strong> ${lightTimeMin} min<br>
-                        </div>
-                    `;
-                } catch (e) {
-                    console.warn("Error calculating live data for " + data.name, e);
-                }
-            }
-
-            return `
-                <div style="min-width: 200px;">
-                    <strong style="font-size: 1.1em;">${data.name}</strong><br>
-                    <strong>Type:</strong> ${data.type === 'dwarf' ? 'Dwarf Planet' : 'Planet'}<br>
-                    ${detailsHtml}
-                    ${liveHtml}
-                </div>
-            `;
-        } else if (closestObject.type === 'moon') {
-            return `
-                <strong>Name:</strong> ${data.name}<br>
-                <strong>Type:</strong> Moon<br>
-                <strong>Orbital Period:</strong> ${data.period.toFixed(1)} days<br>
-            `;
-        } else if (closestObject.type === 'star') {
-            const distance = data.distance ? (data.distance * 3.26156).toFixed(1) : "N/A";
-            const luminosity = data.radius ? data.radius.toFixed(1) : "N/A";
-            const name = data.name || `HD ${data.id}`;
-            const type = data.spectralType || "Unknown";
-            return `
-                <strong>Name:</strong> ${name}<br>
-                <strong>Distance:</strong> ${distance} LY<br>
-                <strong>Type:</strong> ${type}<br>
-                <strong>Luminosity:</strong> ${luminosity}<br>
-                <strong>Catalog ID:</strong> ${data.id}<br>
-            `;
+        switch (closestObject.type) {
+            case 'sun':
+                return formatSunTooltip();
+            case 'planet':
+                return formatPlanetTooltip(data);
+            case 'moon':
+                return formatMoonTooltip(data);
+            case 'star':
+                return formatStarTooltip(data);
+            default:
+                return '';
         }
     } catch (error) {
         console.error("Error formatting tooltip:", error);
         return "Error loading data";
     }
-
-    return '';
 }
+
