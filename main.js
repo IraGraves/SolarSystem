@@ -32,6 +32,10 @@ import { createMagneticField } from './src/systems/magneticFields.js';
     universeGroup.add(orbitGroup);
     universeGroup.add(zodiacGroup);
 
+    const constellationsGroup = new THREE.Group();
+    universeGroup.add(constellationsGroup);
+    constellationsGroup.visible = config.showConstellations;
+
     zodiacGroup.visible = config.showZodiacs;
 
     // 1.5 Create Zodiac Signs
@@ -78,6 +82,7 @@ import { createMagneticField } from './src/systems/magneticFields.js';
       sun,
       orbitGroup,
       zodiacGroup,
+      constellationsGroup,
       starsRef,
       renderer,
       camera,
@@ -140,7 +145,7 @@ import { createMagneticField } from './src/systems/magneticFields.js';
           // Logic: 0.35 / 0.6 * 0.3 = 0.175 opacity.
           stars.material.opacity = (config.starBrightness / 0.6) * 0.3;
 
-          createConstellations(zodiacGroup, rawData);
+          createConstellations(zodiacGroup, constellationsGroup, rawData);
           alignZodiacSigns(zodiacSignsGroup, rawData);
         }
       })

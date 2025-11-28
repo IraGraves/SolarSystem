@@ -19,6 +19,7 @@ export const config = {
   showAxes: false,
   referencePlane: 'Ecliptic', // 'Equatorial' or 'Ecliptic'
   showZodiacs: false, // Constellation lines
+  showConstellations: false,
   showZodiacSigns: false, // Zodiac sign sprites
   showHabitableZone: false,
   showMagneticFields: false,

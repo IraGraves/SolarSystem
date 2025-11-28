@@ -97,6 +97,7 @@ export function setupOverlaysFolder(
   gui,
   orbitGroup,
   zodiacGroup,
+  constellationsGroup,
   planets,
   sun,
   zodiacSignsGroup,
@@ -152,13 +153,40 @@ export function setupOverlaysFolder(
       });
     });
 
+  // Zodiacs & Constellations Logic
+  const updateConstellations = () => {
+    const showZ = config.showZodiacs;
+    const showC = config.showConstellations;
+
+    // Zodiac Group Visibility: Visible if either switch is ON
+    if (zodiacGroup) {
+      zodiacGroup.visible = showZ || showC;
+
+      // Zodiac Group Color: Distinct (Blue) if Zodiac switch is ON, else same as others (Grey)
+      const color = showZ ? 0x446688 : 0xcccccc;
+      zodiacGroup.children.forEach((child) => {
+        if (child.material) {
+          child.material.color.setHex(color);
+          // Adjust opacity if needed, but keeping it simple for now
+          child.material.opacity = showZ ? 0.6 : 0.4;
+        }
+      });
+    }
+
+    // Other Constellations Visibility: Only if Constellations switch is ON
+    if (constellationsGroup) {
+      constellationsGroup.visible = showC;
+    }
+  };
+
   // Zodiacs
+  overlaysFolder.add(config, 'showZodiacs').name('Zodiacs').onChange(updateConstellations);
+
+  // Constellations (All 88)
   overlaysFolder
-    .add(config, 'showZodiacs')
-    .name('Zodiacs')
-    .onChange((val) => {
-      zodiacGroup.visible = val;
-    });
+    .add(config, 'showConstellations')
+    .name('Constellations (All)')
+    .onChange(updateConstellations);
 
   // Zodiac Signs
   overlaysFolder

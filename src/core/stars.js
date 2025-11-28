@@ -182,13 +182,13 @@ export async function createStarfield(scene) {
   }
 }
 
-export async function createConstellations(zodiacGroup, starsData) {
+export async function createConstellations(zodiacGroup, constellationsGroup, starsData) {
   try {
-    // Load zodiac line data
-    const zodiacLinesResponse = await fetch(`${import.meta.env.BASE_URL}assets/zodiac_lines.json`);
-    const zodiacLines = await zodiacLinesResponse.json();
+    // Load all constellation lines (generated from constellations.json + stars_3d.json)
+    const response = await fetch(`${import.meta.env.BASE_URL}assets/constellations_lines_all.json`);
+    const allConstellations = await response.json();
 
-    // Create a map of HR number (i field) to star position
+    // Create a map of Star ID -> Position
     const SCALE = 10000;
     const starPositionMap = {};
     starsData.forEach((star) => {
@@ -198,39 +198,49 @@ export async function createConstellations(zodiacGroup, starsData) {
       }
     });
 
-    const material = new THREE.LineBasicMaterial({
-      color: 0x446688,
+    const zodiacMaterial = new THREE.LineBasicMaterial({
+      color: 0x446688, // Distinct color for Zodiacs
       transparent: true,
       opacity: 0.6,
     });
 
-    // Draw constellation lines by connecting actual stars
-    for (const [constellationId, hrNumbers] of Object.entries(zodiacLines)) {
-      const points = [];
+    const constellationMaterial = new THREE.LineBasicMaterial({
+      color: 0xcccccc, // Different color for others (e.g., white/grey)
+      transparent: true,
+      opacity: 0.4,
+    });
 
-      for (let i = 0; i < hrNumbers.length; i++) {
-        const hrNumber = hrNumbers[i];
-        const position = starPositionMap[hrNumber];
+    // Draw constellation lines
+    let zodiacCount = 0;
+    let otherCount = 0;
 
-        if (position) {
-          points.push(position);
-        } else {
-          console.warn(
-            `Star HR ${hrNumber} not found in catalog for constellation ${constellationId}`
-          );
+    for (const [constellationId, lineStrips] of Object.entries(allConstellations)) {
+      const isZodiac = ZODIAC_IDS.includes(constellationId);
+      const targetGroup = isZodiac ? zodiacGroup : constellationsGroup;
+      const material = isZodiac ? zodiacMaterial : constellationMaterial;
+
+      // lineStrips is an array of arrays of star IDs: [[id1, id2, ...], [id3, id4]]
+      for (const starIds of lineStrips) {
+        const points = [];
+        for (const id of starIds) {
+          const position = starPositionMap[id];
+          if (position) {
+            points.push(position);
+          }
+        }
+
+        if (points.length >= 2) {
+          const geometry = new THREE.BufferGeometry().setFromPoints(points);
+          const line = new THREE.Line(geometry, material);
+          targetGroup.add(line);
         }
       }
 
-      if (points.length >= 2) {
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, material);
-        zodiacGroup.add(line);
-      }
+      if (isZodiac) zodiacCount++;
+      else otherCount++;
     }
 
-    console.log(
-      `Created ${Object.keys(zodiacLines).length} zodiac constellations from catalog stars`
-    );
+    console.log(`Created ${zodiacCount} zodiacs and ${otherCount} other constellations.`);
   } catch (error) {
     console.error('Error loading constellations:', error);
   }
