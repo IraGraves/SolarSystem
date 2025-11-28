@@ -2,35 +2,114 @@
 
 .voyager1-checkbox .name::before {
   content: "● ";
-  color: #00ffff;
-  /* Cyan */
+  color: #00ffff; /* Cyan */
   font-size: 1em;
 }
 
 .voyager2-checkbox .name::before {
   content: "● ";
-  color: #ff00ff;
-  /* Magenta */
+  color: #ff00ff; /* Magenta */
   font-size: 1em;
 }
 
 .pioneer10-checkbox .name::before {
   content: "● ";
-  color: #ffa500;
-  /* Orange */
+  color: #ffa500; /* Orange */
   font-size: 1em;
 }
 
 .pioneer11-checkbox .name::before {
   content: "● ";
-  color: #00ff00;
-  /* Lime Green */
+  color: #00ff00; /* Lime Green */
   font-size: 1em;
 }
 
 .galileo-checkbox .name::before {
   content: "● ";
-  color: #ffd700;
-  /* Gold */
+  color: #ffd700; /* Gold */
   font-size: 1em;
+}
+
+.cassini-checkbox .name::before {
+  content: "● ";
+  color: #0088ff; /* Azure */
+  font-size: 1em;
+}
+
+.new-horizons-checkbox .name::before {
+  content: "● ";
+  color: #ffffff; /* White */
+  font-size: 1em;
+}
+
+.parker-checkbox .name::before {
+  content: "● ";
+  color: #ff4500; /* OrangeRed */
+  font-size: 1em;
+}
+
+.juno-checkbox .name::before {
+  content: "● ";
+  color: #ff69b4; /* HotPink */
+  font-size: 1em;
+}
+
+.rosetta-checkbox .name::before {
+  content: "● ";
+  color: #8a2be2; /* BlueViolet */
+  font-size: 1em;
+}
+
+.ulysses-checkbox .name::before {
+  content: "● ";
+  color: #ffff00; /* Yellow */
+  font-size: 1em;
+}
+
+/* Layout: Checkbox on the left */
+.voyager1-checkbox,
+.voyager2-checkbox,
+.pioneer10-checkbox,
+.pioneer11-checkbox,
+.galileo-checkbox,
+.cassini-checkbox,
+.new-horizons-checkbox,
+.parker-checkbox,
+.juno-checkbox,
+.rosetta-checkbox,
+.ulysses-checkbox {
+  display: flex !important;
+  flex-direction: row-reverse !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+}
+
+.voyager1-checkbox .name,
+.voyager2-checkbox .name,
+.pioneer10-checkbox .name,
+.pioneer11-checkbox .name,
+.galileo-checkbox .name,
+.cassini-checkbox .name,
+.new-horizons-checkbox .name,
+.parker-checkbox .name,
+.juno-checkbox .name,
+.rosetta-checkbox .name,
+.ulysses-checkbox .name {
+  width: auto !important;
+  margin-left: 8px;
+}
+
+.voyager1-checkbox .widget,
+.voyager2-checkbox .widget,
+.pioneer10-checkbox .widget,
+.pioneer11-checkbox .widget,
+.galileo-checkbox .widget,
+.cassini-checkbox .widget,
+.new-horizons-checkbox .widget,
+.parker-checkbox .widget,
+.juno-checkbox .widget,
+.rosetta-checkbox .widget,
+.ulysses-checkbox .widget {
+  width: auto !important;
+  min-width: auto !important;
 }

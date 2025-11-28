@@ -56,8 +56,11 @@ export function setupGUI(
     scalePreset: 'Artistic',
   };
 
-  // --- SCALE SECTION ---
-  setupScaleFolder(gui, uiState, planets, sun);
+  // --- FIND SECTION ---
+  setupFindFolder(gui, planets, sun, starsRef, camera, controls);
+
+  // --- TIME SECTION ---
+  const { dateCtrl, timeCtrl, stardateCtrl, speedDisplay } = setupTimeFolder(gui, uiState, config);
 
   // --- OBJECTS SECTION ---
   setupObjectsFolder(gui, planets, sun);
@@ -75,17 +78,14 @@ export function setupGUI(
     magneticFieldsGroup
   );
 
-  // --- MISSIONS SECTION ---
-  setupMissionsFolder(gui, config);
+  // --- SCALE SECTION ---
+  setupScaleFolder(gui, uiState, planets, sun);
 
   // --- VISUAL SECTION ---
   setupVisualFolder(gui, starsRef, renderer, universeGroup);
 
-  // --- TIME SECTION ---
-  const { dateCtrl, timeCtrl, stardateCtrl, speedDisplay } = setupTimeFolder(gui, uiState, config);
-
-  // --- FIND SECTION ---
-  setupFindFolder(gui, planets, sun, starsRef, camera, controls);
+  // --- MISSIONS SECTION ---
+  setupMissionsFolder(gui, config);
 
   // --- NAVIGATION SECTION ---
   setupNavigationFolder(gui, uiState);

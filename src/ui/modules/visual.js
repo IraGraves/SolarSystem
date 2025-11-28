@@ -107,7 +107,7 @@ export function setupOverlaysFolder(
   const overlaysFolder = gui.addFolder('Overlays');
 
   // Orbits
-  overlaysFolder
+  const orbitsCtrl = overlaysFolder
     .add(config, 'showOrbits')
     .name('Orbits')
     .onChange((val) => {
@@ -119,6 +119,7 @@ export function setupOverlaysFolder(
       });
       updateCapMoonOrbitsVisibility();
     });
+  orbitsCtrl.domElement.classList.add('checkbox-left');
 
   const capMoonOrbitsCtrl = overlaysFolder
     .add(config, 'capMoonOrbits')
@@ -126,7 +127,7 @@ export function setupOverlaysFolder(
     .onChange(() => {
       // Moon positions will be updated in the next animation frame
     });
-  capMoonOrbitsCtrl.domElement.classList.add('child-control');
+  capMoonOrbitsCtrl.domElement.classList.add('child-control', 'checkbox-left');
 
   // Show/hide child control based on parent state
   const updateCapMoonOrbitsVisibility = () => {
@@ -135,7 +136,7 @@ export function setupOverlaysFolder(
   updateCapMoonOrbitsVisibility();
 
   // Axes
-  overlaysFolder
+  const axesCtrl = overlaysFolder
     .add(config, 'showAxes')
     .name('Axes')
     .onChange((val) => {
@@ -152,6 +153,7 @@ export function setupOverlaysFolder(
         });
       });
     });
+  axesCtrl.domElement.classList.add('checkbox-left');
 
   // Zodiacs & Constellations Logic
   const updateConstellations = () => {
@@ -180,16 +182,21 @@ export function setupOverlaysFolder(
   };
 
   // Zodiacs
-  overlaysFolder.add(config, 'showZodiacs').name('Zodiacs').onChange(updateConstellations);
+  const zodiacsCtrl = overlaysFolder
+    .add(config, 'showZodiacs')
+    .name('Zodiacs')
+    .onChange(updateConstellations);
+  zodiacsCtrl.domElement.classList.add('checkbox-left');
 
   // Constellations (All 88)
-  overlaysFolder
+  const constellationsCtrl = overlaysFolder
     .add(config, 'showConstellations')
     .name('Constellations (All)')
     .onChange(updateConstellations);
+  constellationsCtrl.domElement.classList.add('checkbox-left');
 
   // Zodiac Signs
-  overlaysFolder
+  const zodiacSignsCtrl = overlaysFolder
     .add(config, 'showZodiacSigns')
     .name('Zodiac Signs')
     .onChange((val) => {
@@ -197,9 +204,10 @@ export function setupOverlaysFolder(
         zodiacSignsGroup.visible = val;
       }
     });
+  zodiacSignsCtrl.domElement.classList.add('checkbox-left');
 
   // Habitable Zone
-  overlaysFolder
+  const habitableZoneCtrl = overlaysFolder
     .add(config, 'showHabitableZone')
     .name('Habitable Zone')
     .onChange((val) => {
@@ -207,9 +215,10 @@ export function setupOverlaysFolder(
         habitableZone.visible = val;
       }
     });
+  habitableZoneCtrl.domElement.classList.add('checkbox-left');
 
   // Magnetic Fields
-  overlaysFolder
+  const magneticFieldsCtrl = overlaysFolder
     .add(config, 'showMagneticFields')
     .name('Magnetic Fields')
     .onChange((val) => {
@@ -243,6 +252,7 @@ export function setupOverlaysFolder(
       }
       updateCapMagneticFieldsVisibility();
     });
+  magneticFieldsCtrl.domElement.classList.add('checkbox-left');
 
   const capMagneticFieldsCtrl = overlaysFolder
     .add(config, 'capMagneticFields')
@@ -250,7 +260,7 @@ export function setupOverlaysFolder(
     .onChange(() => {
       updateMagneticFieldScales(planets);
     });
-  capMagneticFieldsCtrl.domElement.classList.add('child-control');
+  capMagneticFieldsCtrl.domElement.classList.add('child-control', 'checkbox-left');
 
   // Show/hide child control based on parent state
   const updateCapMagneticFieldsVisibility = () => {
@@ -290,12 +300,13 @@ export function updateMagneticFieldScales(planets) {
 export function setupObjectsFolder(gui, planets, sun) {
   const objectsFolder = gui.addFolder('Objects');
 
-  objectsFolder
+  const sunCtrl = objectsFolder
     .add(config, 'showSun')
     .name('Sun')
     .onChange((val) => {
       sun.visible = val;
     });
+  sunCtrl.domElement.classList.add('checkbox-left');
 
   const updatePlanetVisibility = (val) => {
     planets.forEach((p) => {
@@ -316,7 +327,11 @@ export function setupObjectsFolder(gui, planets, sun) {
       }
     });
   };
-  objectsFolder.add(config, 'showPlanets').name('Planets').onChange(updatePlanetVisibility);
+  const planetsCtrl = objectsFolder
+    .add(config, 'showPlanets')
+    .name('Planets')
+    .onChange(updatePlanetVisibility);
+  planetsCtrl.domElement.classList.add('checkbox-left');
   updatePlanetVisibility(config.showPlanets);
 
   const updateDwarfVisibility = (val) => {
@@ -327,10 +342,11 @@ export function setupObjectsFolder(gui, planets, sun) {
       }
     });
   };
-  objectsFolder
+  const dwarfCtrl = objectsFolder
     .add(config, 'showDwarfPlanets')
     .name('Dwarf Planets')
     .onChange(updateDwarfVisibility);
+  dwarfCtrl.domElement.classList.add('checkbox-left');
   updateDwarfVisibility(config.showDwarfPlanets);
 
   const updateLargestMoonsVisibility = (val) => {
@@ -343,10 +359,11 @@ export function setupObjectsFolder(gui, planets, sun) {
       });
     });
   };
-  objectsFolder
+  const largestMoonsCtrl = objectsFolder
     .add(config, 'showLargestMoons')
     .name('Largest Moons')
     .onChange(updateLargestMoonsVisibility);
+  largestMoonsCtrl.domElement.classList.add('checkbox-left');
   updateLargestMoonsVisibility(config.showLargestMoons);
 
   const updateMajorMoonsVisibility = (val) => {
@@ -359,10 +376,11 @@ export function setupObjectsFolder(gui, planets, sun) {
       });
     });
   };
-  objectsFolder
+  const majorMoonsCtrl = objectsFolder
     .add(config, 'showMajorMoons')
     .name('Major Moons')
     .onChange(updateMajorMoonsVisibility);
+  majorMoonsCtrl.domElement.classList.add('checkbox-left');
   updateMajorMoonsVisibility(config.showMajorMoons);
 
   const updateSmallMoonsVisibility = (val) => {
@@ -375,10 +393,11 @@ export function setupObjectsFolder(gui, planets, sun) {
       });
     });
   };
-  objectsFolder
+  const smallMoonsCtrl = objectsFolder
     .add(config, 'showSmallMoons')
     .name('Small Moons')
     .onChange(updateSmallMoonsVisibility);
+  smallMoonsCtrl.domElement.classList.add('checkbox-left');
   updateSmallMoonsVisibility(config.showSmallMoons);
 
   objectsFolder.close();

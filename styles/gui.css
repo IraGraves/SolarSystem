@@ -350,3 +350,21 @@
   color: #999;
   font-size: 0.95em;
 }
+
+/* Utility: Left-aligned Checkbox */
+.checkbox-left {
+  display: flex !important;
+  flex-direction: row-reverse !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+}
+
+.checkbox-left .name {
+  width: auto !important;
+  margin-left: 8px;
+}
+
+.checkbox-left .widget {
+  width: auto !important;
+  min-width: auto !important;
+}
