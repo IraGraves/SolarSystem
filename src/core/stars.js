@@ -233,6 +233,11 @@ export async function createConstellations(zodiacGroup, constellationsGroup, sta
         if (points.length >= 2) {
           const geometry = new THREE.BufferGeometry().setFromPoints(points);
           const line = new THREE.Line(geometry, material);
+          line.userData = {
+            type: 'constellation',
+            id: constellationId,
+            isZodiac: isZodiac,
+          };
           targetGroup.add(line);
         }
       }

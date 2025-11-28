@@ -10,8 +10,17 @@ const SCREEN_HIT_RADIUS = 10; // Pixels on screen for hit detection
  * @param {Array} planets - Array of planet objects
  * @param {THREE.Mesh} sun - The sun mesh
  * @param {Object} starsRef - Reference to the starfield points object
+ * @param {THREE.Group} zodiacGroup - Group containing zodiac lines
+ * @param {THREE.Group} constellationsGroup - Group containing other constellation lines
  */
-export function setupTooltipSystem(camera, planets, sun, starsRef) {
+export function setupTooltipSystem(
+  camera,
+  planets,
+  sun,
+  starsRef,
+  zodiacGroup,
+  constellationsGroup
+) {
   const tooltip = document.getElementById('tooltip');
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
@@ -37,7 +46,7 @@ export function setupTooltipSystem(camera, planets, sun, starsRef) {
     let closestObject = null;
     let closestDistance = Infinity;
 
-    // 1. Check Planets, Sun, and Moons using Raycaster
+    // 1. Check Planets, Sun, and Moons using Raycaster (3D)
     const interactableObjects = [sun];
     planets.forEach((p) => {
       interactableObjects.push(p.mesh);
@@ -46,20 +55,29 @@ export function setupTooltipSystem(camera, planets, sun, starsRef) {
       }
     });
 
+    // Note: Constellations are now checked in screen space for better UX
+
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(interactableObjects, true);
 
+    // Debug logging (throttle to avoid spam)
+    if (Math.random() < 0.01) {
+      // console.log('Interactable objects:', interactableObjects.length);
+      // console.log('Intersects:', intersects.length);
+      // if (intersects.length > 0) console.log('Hit:', intersects[0].object);
+    }
+
     if (intersects.length > 0) {
-      // Found a 3D object
+      // Found a 3D object (Planet/Sun/Moon)
       const hit = intersects[0];
       const objectData = getObjectData(hit.object, planets, sun);
       if (objectData) {
         closestObject = objectData;
-        closestDistance = 0; // Priority over stars
+        closestDistance = 0; // Priority over everything
       }
     }
 
-    // 2. Check Stars (only if no 3D object found or to find closest star)
+    // 2. Check Stars (only if no 3D object found)
     // If we already hit a planet/sun, we skip stars to avoid confusion
     if (!closestObject) {
       const stars = starsRef.value;
@@ -72,7 +90,8 @@ export function setupTooltipSystem(camera, planets, sun, starsRef) {
         // but for ~5000 stars it's usually fine.
 
         // We need to find the closest star in screen space
-        let minScreenDist = SCREEN_HIT_RADIUS;
+        const STAR_HIT_RADIUS = 15; // Reduced radius to avoid sticky feeling
+        let minScreenDist = STAR_HIT_RADIUS;
 
         for (let i = 0; i < starData.length; i++) {
           const x = positions[i * 3];
@@ -80,6 +99,7 @@ export function setupTooltipSystem(camera, planets, sun, starsRef) {
           const z = positions[i * 3 + 2];
 
           const starPos = new THREE.Vector3(x, y, z);
+          starPos.applyMatrix4(stars.matrixWorld);
 
           // Project star position to screen space
           // This converts 3D world coordinates to 2D screen coordinates
@@ -103,6 +123,59 @@ export function setupTooltipSystem(camera, planets, sun, starsRef) {
           }
         }
       }
+    }
+
+    // 3. Check Constellations (Screen Space) - Only if no planet or star hit
+    if (!closestObject) {
+      const groupsToCheck = [];
+      if (zodiacGroup && zodiacGroup.visible) groupsToCheck.push(zodiacGroup);
+      if (constellationsGroup && constellationsGroup.visible)
+        groupsToCheck.push(constellationsGroup);
+
+      let minLineDist = SCREEN_HIT_RADIUS; // Use same radius
+
+      groupsToCheck.forEach((group) => {
+        group.children.forEach((line) => {
+          if (!line.isLine) return;
+
+          const positions = line.geometry.attributes.position;
+          const p1 = new THREE.Vector3();
+          const p2 = new THREE.Vector3();
+
+          // Iterate segments
+          for (let i = 0; i < positions.count - 1; i++) {
+            p1.fromBufferAttribute(positions, i);
+            p2.fromBufferAttribute(positions, i + 1);
+
+            // Transform to world space then project
+            // Note: Lines are children of groups which might be in universeGroup
+            // We need world positions.
+            // Optimization: Assuming lines don't have local matrix transforms other than parent
+            p1.applyMatrix4(line.matrixWorld);
+            p2.applyMatrix4(line.matrixWorld);
+
+            const s1 = p1.clone().project(camera);
+            const s2 = p2.clone().project(camera);
+
+            // Check if in front of camera
+            if (s1.z < -1 || s1.z > 1 || s2.z < -1 || s2.z > 1) continue;
+
+            // Convert to screen coords
+            const x1 = (s1.x * 0.5 + 0.5) * window.innerWidth;
+            const y1 = (-(s1.y * 0.5) + 0.5) * window.innerHeight;
+            const x2 = (s2.x * 0.5 + 0.5) * window.innerWidth;
+            const y2 = (-(s2.y * 0.5) + 0.5) * window.innerHeight;
+
+            // Distance from point (mouseX, mouseY) to segment (x1,y1)-(x2,y2)
+            const dist = distToSegmentSquared(mouseX, mouseY, x1, y1, x2, y2);
+
+            if (dist < minLineDist * minLineDist) {
+              minLineDist = Math.sqrt(dist);
+              closestObject = { type: 'constellation', data: line.userData };
+            }
+          }
+        });
+      });
     }
 
     // Display tooltip based on object type
@@ -146,6 +219,10 @@ export function setupTooltipSystem(camera, planets, sun, starsRef) {
  * Helper to map mesh back to data object
  */
 function getObjectData(mesh, planets, sun) {
+  if (mesh.userData && mesh.userData.type === 'constellation') {
+    return { type: 'constellation', data: mesh.userData };
+  }
+
   if (mesh === sun || mesh.parent === sun) {
     return { type: 'sun', data: {} };
   }
@@ -335,6 +412,16 @@ function formatStarTooltip(data) {
 }
 
 /**
+ * Formats tooltip for a constellation
+ * @param {Object} data - Constellation data object
+ * @returns {string} HTML string
+ */
+function formatConstellationTooltip(data) {
+  const type = data.isZodiac ? 'Zodiac Constellation' : 'Constellation';
+  return buildTooltip(data.id, [{ label: 'Type', value: type }]);
+}
+
+/**
  * Formats the tooltip HTML based on the object type
  * @param {Object} closestObject - Object containing data and type
  * @returns {string} HTML string for the tooltip
@@ -352,6 +439,8 @@ function formatTooltip(closestObject) {
         return formatMoonTooltip(data);
       case 'star':
         return formatStarTooltip(data);
+      case 'constellation':
+        return formatConstellationTooltip(data);
       default:
         return '';
     }
@@ -359,4 +448,17 @@ function formatTooltip(closestObject) {
     console.error('Error formatting tooltip:', error);
     return 'Error loading data';
   }
+}
+
+/**
+ * Calculates squared distance from a point (x,y) to a line segment (x1,y1)-(x2,y2)
+ */
+function distToSegmentSquared(x, y, x1, y1, x2, y2) {
+  const l2 = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+  if (l2 === 0) return (x - x1) * (x - x1) + (y - y1) * (y - y1);
+  let t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / l2;
+  t = Math.max(0, Math.min(1, t));
+  const px = x1 + t * (x2 - x1);
+  const py = y1 + t * (y2 - y1);
+  return (x - px) * (x - px) + (y - py) * (y - py);
 }

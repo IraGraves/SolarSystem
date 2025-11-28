@@ -92,7 +92,7 @@ import { createMagneticField } from './src/systems/magneticFields.js';
       magneticFieldsGroup,
       universeGroup
     );
-    setupTooltipSystem(camera, planets, sun, starsRef);
+    setupTooltipSystem(camera, planets, sun, starsRef, zodiacGroup, constellationsGroup);
     setupFocusMode(camera, controls, planets, sun);
     initializeMissions(universeGroup);
     window.updateMissions = updateMissions;
