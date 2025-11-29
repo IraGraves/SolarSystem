@@ -40,13 +40,18 @@ import { setupGUI, updateUI } from './src/ui/gui.js';
 
     // 1. Setup Scene
     loading.textContent = 'Creating Scene...';
-    const { scene, camera, renderer, controls, orbitGroup, zodiacGroup, shadowLight } =
+    const { scene, camera, renderer, controls, orbitGroup, zodiacGroup, sunLight, shadowLight } =
       createScene();
     window.scene = scene; // Expose for debugging
 
     // Create Universe Group (Root for all celestial objects)
+    // Create Universe Group (Root for all celestial objects)
     const universeGroup = new THREE.Group();
     scene.add(universeGroup);
+
+    // Add lights to universeGroup so they move with the Sun (which is at 0,0,0 in universeGroup)
+    universeGroup.add(sunLight);
+    universeGroup.add(shadowLight);
 
     // Add groups to universe instead of scene
     universeGroup.add(orbitGroup);

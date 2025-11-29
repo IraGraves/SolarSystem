@@ -76,7 +76,7 @@ export function setupVisualFolder(
 
   // Coordinate System (Origin)
   visualFolder
-    .add(config, 'coordinateSystem', ['Heliocentric', 'Geocentric', 'Barycentric'])
+    .add(config, 'coordinateSystem', ['Heliocentric', 'Geocentric', 'Barycentric', 'Tychonic'])
     .name('Origin')
     .onChange(() => {
       updateCoordinateSystem(universeGroup, planets, sun);

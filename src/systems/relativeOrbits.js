@@ -3,46 +3,25 @@ import * as THREE from 'three';
 import { AU_TO_SCENE, config } from '../config.js';
 import { calculateKeplerianPosition } from '../physics/orbits.js';
 
-const MASSES = {
-  Sun: 333000,
-  Mercury: 0.055,
-  Venus: 0.815,
-  Earth: 1,
-  Mars: 0.107,
-  Jupiter: 317.8,
-  Saturn: 95.2,
-  Uranus: 14.5,
-  Neptune: 17.1,
-};
+// Reusable vectors to avoid garbage collection
+const _tempVec = new THREE.Vector3();
+const _targetPos = new THREE.Vector3();
+const _centerPos = new THREE.Vector3();
 
 // Cache for geometries to avoid reallocation
 const orbitGeometries = new Map();
 
-function getHeliocentricPosition(data, time) {
+function getHeliocentricPosition(data, time, target) {
   if (data.body) {
     const vec = Astronomy.HelioVector(Astronomy.Body[data.body], time);
-    return new THREE.Vector3(vec.x, vec.y, vec.z);
+    target.set(vec.x, vec.y, vec.z);
   } else if (data.elements) {
     const vec = calculateKeplerianPosition(data.elements, time);
-    return new THREE.Vector3(vec.x, vec.y, vec.z);
+    target.set(vec.x, vec.y, vec.z);
+  } else {
+    target.set(0, 0, 0);
   }
-  return new THREE.Vector3(0, 0, 0);
-}
-
-function getBarycenterPosition(allBodies, time) {
-  let totalMass = MASSES.Sun;
-  const weightedPos = new THREE.Vector3(0, 0, 0);
-
-  allBodies.forEach(data => {
-    if (MASSES[data.name]) {
-      const mass = MASSES[data.name];
-      totalMass += mass;
-      const pos = getHeliocentricPosition(data, time);
-      weightedPos.add(pos.multiplyScalar(mass));
-    }
-  });
-
-  return weightedPos.divideScalar(totalMass);
+  return target;
 }
 
 /**
@@ -56,11 +35,55 @@ export function updateRelativeOrbits(orbitGroup, relativeOrbitGroup, planets, su
   if (system === 'Heliocentric') {
     orbitGroup.visible = config.showOrbits;
     relativeOrbitGroup.visible = false;
+    // Ensure orbits are visible, respecting settings
+    orbitGroup.children.forEach(child => {
+      // Check if it's a dwarf planet orbit
+      const isDwarf = planets.some(p => p.data.type === 'dwarf' && child.name === p.data.name + '_Orbit');
+      const isPlanet = planets.some(p => p.data.type !== 'dwarf' && child.name === p.data.name + '_Orbit');
+      
+      if (isDwarf) {
+        child.visible = config.showDwarfPlanets;
+      } else if (isPlanet) {
+        child.visible = config.showPlanets;
+      } else {
+        // Fallback for other orbits (e.g. Moon if we had it)
+        child.visible = true;
+      }
+    });
     return;
-  }
+  } else if (system === 'Tychonic') {
+    // Tychonic: Earth at center. Sun orbits Earth. Planets orbit Sun.
+    // Show standard orbits (centered on Sun)
+    orbitGroup.visible = config.showOrbits;
+    // Show relative orbits (for Sun's path around Earth)
+    relativeOrbitGroup.visible = config.showOrbits;
 
-  orbitGroup.visible = false;
-  relativeOrbitGroup.visible = config.showOrbits;
+    // Hide Earth's standard orbit (since Earth is center)
+    const earthOrbit = orbitGroup.getObjectByName('Earth_Orbit');
+    if (earthOrbit) earthOrbit.visible = false;
+    
+    // Ensure other orbits are visible, respecting settings
+    orbitGroup.children.forEach(child => {
+      if (child.name !== 'Earth_Orbit') {
+        // Check if it's a dwarf planet orbit
+        const isDwarf = planets.some(p => p.data.type === 'dwarf' && child.name === p.data.name + '_Orbit');
+        const isPlanet = planets.some(p => p.data.type !== 'dwarf' && child.name === p.data.name + '_Orbit');
+        
+        if (isDwarf) {
+          child.visible = config.showDwarfPlanets;
+        } else if (isPlanet) {
+          child.visible = config.showPlanets;
+        } else {
+          // Fallback for other orbits (e.g. Moon if we had it)
+          child.visible = true;
+        }
+      }
+    });
+  } else {
+    // Geocentric / Barycentric
+    orbitGroup.visible = false;
+    relativeOrbitGroup.visible = config.showOrbits;
+  }
   
   // Sync rotation with universeGroup (e.g. for Ecliptic plane)
   if (sun && sun.parent) {
@@ -71,8 +94,11 @@ export function updateRelativeOrbits(orbitGroup, relativeOrbitGroup, planets, su
 
   const allBodiesData = planets.map(p => p.data);
   const bodiesToTrace = [...planets];
-  if (system === 'Geocentric') {
+  if (system === 'Geocentric' || system === 'Tychonic') {
     bodiesToTrace.push({ data: { name: 'Sun', body: 'Sun', color: 0xffff00, period: 365.25 } });
+  } else if (system === 'Barycentric') {
+    // 12 years (Jupiter period) to show the full wobble loop
+    bodiesToTrace.push({ data: { name: 'Sun', body: 'Sun', color: 0xffff00, period: 12 * 365.25 } });
   }
 
   // 3. Update Lines
@@ -87,8 +113,13 @@ export function updateRelativeOrbits(orbitGroup, relativeOrbitGroup, planets, su
       isVisible = config.showPlanets;
     }
 
-    // Hide Earth trail in Geocentric
-    if (system === 'Geocentric' && data.name === 'Earth') {
+    // Hide Earth trail in Geocentric/Tychonic
+    if ((system === 'Geocentric' || system === 'Tychonic') && data.name === 'Earth') {
+      isVisible = false;
+    }
+
+    // In Tychonic, ONLY show Sun trail (planets use standard orbits)
+    if (system === 'Tychonic' && data.name !== 'Sun') {
       isVisible = false;
     }
 
@@ -100,12 +131,15 @@ export function updateRelativeOrbits(orbitGroup, relativeOrbitGroup, planets, su
     }
 
     // Determine Duration and Steps
-    const periodDays = data.period || 730; 
-    const durationDays = Math.max(365, periodDays);
+    const durationDays = data.period || 730;
     
     // Adaptive resolution: 1 step every ~2 days, but capped
+    // Barycentric/Tychonic: 500 (performance focus, simple ellipses)
+    // Geocentric: 5000 (fidelity focus, complex epicycles)
+    const maxSteps = (system === 'Geocentric') ? 5000 : 500;
+    
     let steps = Math.ceil(durationDays / 2);
-    if (steps > 10000) steps = 10000;
+    if (steps > maxSteps) steps = maxSteps;
     if (steps < 360) steps = 360;
 
     const halfDuration = durationDays / 2;
@@ -122,10 +156,11 @@ export function updateRelativeOrbits(orbitGroup, relativeOrbitGroup, planets, su
       const positions = new Float32Array((steps + 1) * 3);
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       
+      const isSun = data.name === 'Sun';
       const material = new THREE.LineBasicMaterial({
-        color: data.color || 0x888888,
+        color: isSun ? (data.color || 0xffff00) : 0x444444,
         transparent: true,
-        opacity: 0.4,
+        opacity: isSun ? 0.8 : 0.5,
       });
       
       line = new THREE.Line(geometry, material);
@@ -142,27 +177,28 @@ export function updateRelativeOrbits(orbitGroup, relativeOrbitGroup, planets, su
     for (let i = 0; i <= steps; i++) {
       const t = new Date(startTimeMs + (i / steps) * durationDays * 24 * 60 * 60 * 1000);
       
-      let targetPos;
       if (data.name === 'Sun') {
-        targetPos = new THREE.Vector3(0, 0, 0);
+        _targetPos.set(0, 0, 0);
       } else {
-        targetPos = getHeliocentricPosition(data, t);
+        getHeliocentricPosition(data, t, _targetPos);
       }
 
-      let centerPos;
-      if (system === 'Geocentric') {
+      if (system === 'Geocentric' || system === 'Tychonic') {
         const earthData = allBodiesData.find(d => d.name === 'Earth');
-        centerPos = getHeliocentricPosition(earthData, t);
+        getHeliocentricPosition(earthData, t, _centerPos);
       } else {
-        centerPos = getBarycenterPosition(allBodiesData, t);
+        // Use native Astronomy Engine SSB
+        const ssb = Astronomy.HelioVector(Astronomy.Body.SSB, t);
+        _centerPos.set(ssb.x, ssb.y, ssb.z);
       }
 
-      const relativePos = new THREE.Vector3().subVectors(targetPos, centerPos);
+      // _tempVec = target - center
+      _tempVec.subVectors(_targetPos, _centerPos);
 
       // Convert to Scene Coords (X, Z, -Y)
-      positions[i * 3] = relativePos.x * AU_TO_SCENE;
-      positions[i * 3 + 1] = relativePos.z * AU_TO_SCENE;
-      positions[i * 3 + 2] = -relativePos.y * AU_TO_SCENE;
+      positions[i * 3] = _tempVec.x * AU_TO_SCENE;
+      positions[i * 3 + 1] = _tempVec.z * AU_TO_SCENE;
+      positions[i * 3 + 2] = -_tempVec.y * AU_TO_SCENE;
     }
 
     line.geometry.attributes.position.needsUpdate = true;

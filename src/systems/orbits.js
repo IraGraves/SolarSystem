@@ -34,6 +34,7 @@ export function createOrbitLine(data, orbitGroup) {
     opacity: 0.5,
   });
   const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
+  orbitLine.name = data.name + '_Orbit';
   orbitGroup.add(orbitLine);
 
   return orbitLine;

@@ -58,7 +58,7 @@ export function createScene() {
   // Sun Light (Point) - Illuminates everything EXCEPT Earth/Moon (Layer 0)
   const sunLight = new THREE.PointLight(0xffffff, 2, 0, 0);
   sunLight.layers.set(0);
-  scene.add(sunLight);
+  // scene.add(sunLight); // Added to universeGroup in main.js
 
   // Shadow Light (SpotLight) - Illuminates ONLY Earth/Moon (Layer 1)
   // We use SpotLight instead of DirectionalLight to prevent light leaking backwards onto other planets
@@ -81,7 +81,7 @@ export function createScene() {
   shadowLight.decay = 0; // No decay to mimic sunlight intensity over distance (roughly)
   shadowLight.distance = 1000; // Far enough to reach Earth
 
-  scene.add(shadowLight);
+  // scene.add(shadowLight); // Added to universeGroup in main.js
 
   // Camera needs to see both layers
   camera.layers.enable(0);
@@ -101,5 +101,8 @@ export function createScene() {
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  return { scene, camera, renderer, controls, orbitGroup, zodiacGroup, shadowLight };
+  // Lights are NOT added to scene here. They must be added to universeGroup/Sun in main.js
+  // so they move with the coordinate system shifts.
+  
+  return { scene, camera, renderer, controls, orbitGroup, zodiacGroup, sunLight, shadowLight };
 }

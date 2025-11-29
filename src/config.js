@@ -34,7 +34,7 @@ export const config = {
   showOrbits: true,
   showAxes: false,
   showTooltips: true,
-  coordinateSystem: 'Heliocentric', // 'Heliocentric', 'Geocentric', 'Barycentric'
+  coordinateSystem: 'Heliocentric', // 'Heliocentric', 'Geocentric', 'Barycentric', 'Tychonic'
   referencePlane: 'Ecliptic', // 'Equatorial' or 'Ecliptic'
   showZodiacs: false, // Constellation lines
   showConstellations: false,
