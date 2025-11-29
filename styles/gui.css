@@ -4,7 +4,8 @@
 }
 
 .lil-gui .orbits-folder .title,
-.lil-gui .constellations-folder .title {
+.lil-gui .constellations-folder .title,
+.lil-gui .magnetic-fields-folder .title {
   color: #e2e2e2;
 }
 

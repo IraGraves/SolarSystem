@@ -136,10 +136,10 @@ export function updateOrbitsVisibility(val, orbitGroup, planets, capMoonOrbitsCt
           if (m.data.category === 'largest' && config.showLargestMoons) isVisible = true;
           else if (m.data.category === 'major' && config.showMajorMoons) isVisible = true;
           else if (m.data.category === 'small' && config.showSmallMoons) isVisible = true;
-          
+
           // Fallback
           if (!m.data.category) isVisible = true;
-          
+
           m.data.orbitLine.visible = isVisible;
         }
       }
@@ -277,7 +277,8 @@ export function setupOverlaysFolder(
   zodiacSignsGroup,
   habitableZone,
   magneticFieldsGroup,
-  relativeOrbitGroup // Added
+  relativeOrbitGroup, // Added
+  universeGroup // Added
 ) {
   const overlaysFolder = gui.addFolder('Overlays');
 
@@ -312,9 +313,7 @@ export function setupOverlaysFolder(
   orbitsFolder.domElement.classList.add('orbits-folder');
   orbitsFolder.close();
 
-  const orbitsCtrl = orbitsFolder
-    .add(config, 'showOrbits')
-    .name('Show');
+  const orbitsCtrl = orbitsFolder.add(config, 'showOrbits').name('Show');
   orbitsCtrl.domElement.classList.add('checkbox-left');
 
   const capMoonOrbitsCtrl = orbitsFolder
@@ -332,10 +331,10 @@ export function setupOverlaysFolder(
     .add(config, 'showPlanetColors')
     .name('Planet Colors')
     .onChange(() => {
-       // Trigger update of orbit colors
-       // We need to call updateRelativeOrbits and also update standard orbits material
-       // Since standard orbits are static lines, we might need to traverse and update material color
-       updateOrbitColors(orbitGroup, relativeOrbitGroup, planets);
+      // Trigger update of orbit colors
+      // We need to call updateRelativeOrbits and also update standard orbits material
+      // Since standard orbits are static lines, we might need to traverse and update material color
+      updateOrbitColors(orbitGroup, relativeOrbitGroup, planets);
     });
   planetColorsCtrl.domElement.classList.add('checkbox-left');
 
@@ -343,14 +342,48 @@ export function setupOverlaysFolder(
     .add(config, 'showDwarfPlanetColors')
     .name('Dwarf Planet Colors')
     .onChange(() => {
-       updateOrbitColors(orbitGroup, relativeOrbitGroup, planets);
+      updateOrbitColors(orbitGroup, relativeOrbitGroup, planets);
     });
   dwarfPlanetColorsCtrl.domElement.classList.add('checkbox-left');
-  
+
   // Let's update the Orbits onChange to toggle visibility of orbits
   orbitsCtrl.onChange((val) => {
     updateOrbitsVisibility(val, orbitGroup, planets, null);
   });
+
+  // Magnetic Fields Folder
+  const magneticFieldsFolder = overlaysFolder.addFolder('Magnetic Fields');
+  magneticFieldsFolder.domElement.classList.add('magnetic-fields-folder');
+  magneticFieldsFolder.close();
+
+  const magneticFieldsCtrl = magneticFieldsFolder
+    .add(config, 'showMagneticFields')
+    .name('Planets, Moons')
+    .onChange((val) => updateMagneticFieldsVisibility(val, magneticFieldsGroup, planets, null));
+  magneticFieldsCtrl.domElement.classList.add('checkbox-left');
+
+  const sunMagneticFieldCtrl = magneticFieldsFolder
+    .add(config, 'showSunMagneticField')
+    .name('Sun')
+    .onChange((val) => {
+      if (universeGroup) {
+        // Find by name in universeGroup (direct child)
+        const field = universeGroup.children.find((c) => c.name === 'MagneticField');
+        if (field) field.visible = val;
+      }
+    });
+  sunMagneticFieldCtrl.domElement.classList.add('checkbox-left');
+
+  const capMagneticFieldsCtrl = magneticFieldsFolder
+    .add(config, 'capMagneticFields')
+    .name('Cap When Scaling')
+    .onChange(() => {
+      updateMagneticFieldScales(planets);
+    });
+  capMagneticFieldsCtrl.domElement.classList.add('checkbox-left');
+
+  // Show/hide child control based on parent state
+  updateMagneticFieldsVisibility(config.showMagneticFields, magneticFieldsGroup, planets, null);
 
   // Axes
   const axesCtrl = overlaysFolder
@@ -359,41 +392,12 @@ export function setupOverlaysFolder(
     .onChange((val) => updateAxesVisibility(val, sun, planets));
   axesCtrl.domElement.classList.add('checkbox-left');
 
-
-
   // Habitable Zone
   const habitableZoneCtrl = overlaysFolder
     .add(config, 'showHabitableZone')
     .name('Habitable Zone')
     .onChange((val) => updateHabitableZoneVisibility(val, habitableZone));
   habitableZoneCtrl.domElement.classList.add('checkbox-left');
-
-  // Magnetic Fields
-  const magneticFieldsCtrl = overlaysFolder
-    .add(config, 'showMagneticFields')
-    .name('Magnetic Fields')
-    .onChange((val) =>
-      updateMagneticFieldsVisibility(val, magneticFieldsGroup, planets, capMagneticFieldsCtrl)
-    );
-  magneticFieldsCtrl.domElement.classList.add('checkbox-left');
-
-  const capMagneticFieldsCtrl = overlaysFolder
-    .add(config, 'capMagneticFields')
-    .name('Cap When Scaling')
-    .onChange(() => {
-      updateMagneticFieldScales(planets);
-    });
-  capMagneticFieldsCtrl.domElement.classList.add('child-control', 'checkbox-left');
-
-  // Show/hide child control based on parent state
-  updateMagneticFieldsVisibility(
-    config.showMagneticFields,
-    magneticFieldsGroup,
-    planets,
-    capMagneticFieldsCtrl
-  );
-
-  overlaysFolder.close();
 }
 
 export function updateSunVisibility(val, sun) {
@@ -413,8 +417,8 @@ export function updatePlanetVisibility(val, planets) {
       p.group.children.forEach((child) => {
         if (child !== p.mesh && child !== p.orbitLinesGroup && child.type === 'Mesh') {
           if (!child.userData.isMoon) {
-             // This catches rings
-             child.visible = val;
+            // This catches rings
+            child.visible = val;
           }
         }
       });
@@ -492,19 +496,24 @@ export function setupObjectsFolder(gui, planets, sun) {
 export function updateOrbitColors(orbitGroup, relativeOrbitGroup, planets) {
   const showColors = config.showPlanetColors;
   const showDwarfColors = config.showDwarfPlanetColors;
-  console.log('updateOrbitColors called. showColors:', showColors, 'showDwarfColors:', showDwarfColors);
+  console.log(
+    'updateOrbitColors called. showColors:',
+    showColors,
+    'showDwarfColors:',
+    showDwarfColors
+  );
 
   // 1. Update Standard Orbits (Heliocentric / Tychonic)
   orbitGroup.children.forEach((line) => {
     // if (line.name === 'Earth_Orbit') return; // Removed exclusion
-    
+
     const planetName = line.name.replace('_Orbit', '');
-    const planet = planets.find(p => p.data.name === planetName);
-    
+    const planet = planets.find((p) => p.data.name === planetName);
+
     if (planet) {
       const isDwarf = planet.data.type === 'dwarf';
       const useColor = isDwarf ? showDwarfColors : showColors;
-      const color = useColor ? (planet.data.color || 0x444444) : 0x444444;
+      const color = useColor ? planet.data.color || 0x444444 : 0x444444;
       if (line.material) {
         line.material.color.setHex(color);
         line.material.opacity = useColor ? 0.8 : 0.5;
@@ -517,11 +526,11 @@ export function updateOrbitColors(orbitGroup, relativeOrbitGroup, planets) {
     const bodyName = line.name.replace('_Trail', '');
     if (bodyName === 'Sun') return;
 
-    const planet = planets.find(p => p.data.name === bodyName);
+    const planet = planets.find((p) => p.data.name === bodyName);
     if (planet) {
       const isDwarf = planet.data.type === 'dwarf';
       const useColor = isDwarf ? showDwarfColors : showColors;
-      const color = useColor ? (planet.data.color || 0x444444) : 0x444444;
+      const color = useColor ? planet.data.color || 0x444444 : 0x444444;
       if (line.material) {
         line.material.color.setHex(color);
         line.material.opacity = useColor ? 0.8 : 0.5;

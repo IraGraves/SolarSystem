@@ -24,7 +24,7 @@ import { createConstellations, createStarfield } from './src/core/stars.js';
 import { setupFocusMode, updateFocusMode } from './src/features/focusMode.js';
 import { initializeMissions, updateMissions } from './src/features/missions.js';
 import { createHabitableZone } from './src/systems/habitableZone.js';
-import { createMagneticField } from './src/systems/magneticFields.js';
+import { createMagneticField, createSunMagneticField } from './src/systems/magneticFields.js';
 import { updateRelativeOrbits } from './src/systems/relativeOrbits.js';
 import { createRabbit } from './src/systems/rabbit.js';
 import { alignZodiacSigns, createZodiacSigns } from './src/systems/zodiacSigns.js';
@@ -78,6 +78,15 @@ import { setupGUI, updateUI } from './src/ui/gui.js';
     const magneticFieldsGroup = new THREE.Group();
     magneticFieldsGroup.visible = config.showMagneticFields;
     universeGroup.add(magneticFieldsGroup);
+
+    // Sun field
+    const sunField = createSunMagneticField(sun);
+    if (sunField) {
+      sunField.visible = config.showSunMagneticField;
+      // Attach to universeGroup instead of sun to avoid inheriting scale
+      // And NOT magneticFieldsGroup because that might be hidden by a different toggle
+      universeGroup.add(sunField);
+    }
 
     planets.forEach((p) => {
       // Planet fields
@@ -154,6 +163,7 @@ import { setupGUI, updateUI } from './src/ui/gui.js';
 
     // 5. Start Animation Loop (Immediate)
     const clock = new THREE.Clock();
+    let magneticFieldTime = 0;
 
     function animate() {
       requestAnimationFrame(animate);
@@ -163,6 +173,14 @@ import { setupGUI, updateUI } from './src/ui/gui.js';
       if (!config.stop) {
         const secondsToAdd = config.simulationSpeed * delta;
         config.date.setTime(config.date.getTime() + secondsToAdd * 1000);
+
+        // Accumulate time for magnetic field animation based on simulation speed
+        // We scale it down a bit because simulation speed can be very high
+        // The original was clock.getElapsedTime() which is 1 real second per second.
+        // If simulationSpeed is 1 (realtime), we want it to match.
+        // Update: User requested physically realistic speed (Solar Wind ~400km/s).
+        // This requires a much smaller factor to avoid "faster than light" visuals.
+        magneticFieldTime += delta * config.simulationSpeed * 0.00025;
       }
 
       updateUI(uiControls.uiState, uiControls);
@@ -178,6 +196,33 @@ import { setupGUI, updateUI } from './src/ui/gui.js';
 
       // Render Main Scene
       renderer.render(scene, camera);
+
+      // Update Sun Magnetic Field Animation
+      // sunField is now in universeGroup
+      if (universeGroup) {
+        // We need to be careful not to pick up other things named 'MagneticField' if any
+        // But createSunMagneticField sets name to 'MagneticField'
+        // And planetary fields are on planets.
+        // So finding it in universeGroup children should be safe-ish, but let's be precise.
+        // universeGroup.getObjectByName does a recursive search!
+        // We only want the direct child or we might pick up a planet's field if we are not careful?
+        // Actually, planet fields are children of planets.
+        // getObjectByName is recursive.
+        // So we might accidentally pick up Earth's magnetic field if it's named 'MagneticField'.
+        // Let's use a more specific name for the Sun field or store a reference.
+        // But for now, let's just iterate universeGroup.children to find it safely.
+        const sunField = universeGroup.children.find((c) => c.name === 'MagneticField');
+
+        if (sunField && sunField.visible && sunField.userData.material) {
+          // Use our accumulated simulation time
+          sunField.userData.material.uniforms.uTime.value = magneticFieldTime;
+
+          // Sync rotation with Sun so the field sweeps across the system
+          if (sun) {
+            sunField.rotation.y = sun.rotation.y;
+          }
+        }
+      }
 
       // Render Rabbit (Overlay)
       rabbit.render();

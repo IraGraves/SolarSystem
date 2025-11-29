@@ -77,14 +77,24 @@ export function setupGUI(
     zodiacSignsGroup,
     habitableZone,
     magneticFieldsGroup,
-    relativeOrbitGroup // Added
+    relativeOrbitGroup, // Added
+    universeGroup // Added for Sun Magnetic Field lookup
   );
 
   // --- SCALE SECTION ---
   const scaleCtrl = setupScaleFolder(gui, uiState, planets, sun);
 
   // --- VISUAL SECTION ---
-  setupVisualFolder(gui, starsRef, renderer, universeGroup, planets, sun, orbitGroup, relativeOrbitGroup);
+  setupVisualFolder(
+    gui,
+    starsRef,
+    renderer,
+    universeGroup,
+    planets,
+    sun,
+    orbitGroup,
+    relativeOrbitGroup
+  );
 
   // --- MISSIONS SECTION ---
   setupMissionsFolder(gui, config);
