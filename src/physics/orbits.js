@@ -26,7 +26,9 @@ export function calculateKeplerianPosition(elements, date) {
   const d = (date.getTime() - J2000) / dayMs; // Days since J2000
 
   // Mean motion (degrees per day)
-  const n = 0.9856076686 / Math.pow(elements.a, 1.5);
+  // Based on Earth's mean motion: 360° / 365.256363004 days ≈ 0.9856076686°/day
+  const EARTH_MEAN_MOTION = 0.9856076686;
+  const n = EARTH_MEAN_MOTION / elements.a ** 1.5;
 
   // Current Mean Anomaly
   let M = elements.M + n * d;

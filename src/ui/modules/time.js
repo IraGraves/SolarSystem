@@ -176,7 +176,7 @@ export function setupTimeFolder(gui, uiState, config) {
       const sign = Math.sign(angleDeg);
       const ratio = Math.abs(angleDeg) / 90;
       const exponent = ratio * 11;
-      const speed = sign * Math.pow(10, exponent);
+      const speed = sign * 10 ** exponent;
 
       config.simulationSpeed = speed;
       uiState.speedFactor = formatSpeed(speed);
@@ -193,8 +193,8 @@ export function setupTimeFolder(gui, uiState, config) {
     const x = e.clientX - centerX;
     const y = bottomY - e.clientY; // Y goes up from bottom
 
-    let angleRad = Math.atan2(y, x);
-    let angleDeg = 90 - (angleRad * 180) / Math.PI;
+    const angleRad = Math.atan2(y, x);
+    const angleDeg = 90 - (angleRad * 180) / Math.PI;
 
     setSpeedFromAngle(angleDeg);
   }
@@ -219,9 +219,9 @@ export function setupTimeFolder(gui, uiState, config) {
   // --- Button Logic ---
 
   function handleControlClick(action) {
-    let currentSpeed = config.simulationSpeed;
+    const currentSpeed = config.simulationSpeed;
     // Handle 0 case for log math
-    let mag = currentSpeed === 0 ? 0 : Math.log10(Math.abs(currentSpeed));
+    const mag = currentSpeed === 0 ? 0 : Math.log10(Math.abs(currentSpeed));
     let sign = Math.sign(currentSpeed);
     if (currentSpeed === 0) sign = 1; // Default to forward if paused
 
@@ -240,12 +240,12 @@ export function setupTimeFolder(gui, uiState, config) {
         if (currentSpeed < 0) {
           // Moving towards 0 (e.g. -100 -> -10)
           // Current mag is 2. Target is 1.
-          let targetMag = Math.floor(mag) - 1;
+          const targetMag = Math.floor(mag) - 1;
           // If we cross 0, flip to positive
           if (targetMag < 0) {
             config.simulationSpeed = 1; // Start forward
           } else {
-            config.simulationSpeed = -Math.pow(10, targetMag);
+            config.simulationSpeed = -(10 ** targetMag);
           }
         } else {
           // Moving away from 0 (e.g. 10 -> 100)
@@ -253,8 +253,8 @@ export function setupTimeFolder(gui, uiState, config) {
           if (currentSpeed === 0) {
             config.simulationSpeed = 1;
           } else {
-            let targetMag = Math.floor(mag) + 1;
-            config.simulationSpeed = Math.pow(10, targetMag);
+            const targetMag = Math.floor(mag) + 1;
+            config.simulationSpeed = 10 ** targetMag;
           }
         }
         break;
@@ -262,19 +262,19 @@ export function setupTimeFolder(gui, uiState, config) {
         // Snap to previous power of 10 (more negative)
         if (currentSpeed > 0) {
           // Moving towards 0 (e.g. 100 -> 10)
-          let targetMag = Math.floor(mag) - 1;
+          const targetMag = Math.floor(mag) - 1;
           if (targetMag < 0) {
             config.simulationSpeed = -1; // Start reverse
           } else {
-            config.simulationSpeed = Math.pow(10, targetMag);
+            config.simulationSpeed = 10 ** targetMag;
           }
         } else {
           // Moving away from 0 (e.g. -10 -> -100)
           if (currentSpeed === 0) {
             config.simulationSpeed = -1;
           } else {
-            let targetMag = Math.floor(mag) + 1;
-            config.simulationSpeed = -Math.pow(10, targetMag);
+            const targetMag = Math.floor(mag) + 1;
+            config.simulationSpeed = -(10 ** targetMag);
           }
         }
         break;

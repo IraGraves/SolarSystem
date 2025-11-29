@@ -1,5 +1,5 @@
-import * as THREE from 'three';
 import * as Astronomy from 'astronomy-engine';
+import * as THREE from 'three';
 import { AU_TO_SCENE } from '../config.js';
 import { calculateKeplerianPosition } from '../physics/orbits.js';
 

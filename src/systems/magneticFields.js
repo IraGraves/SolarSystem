@@ -51,7 +51,7 @@ export function createMagneticField(bodyData, radius) {
         // Avoid exactly 0 and PI to prevent singularities
         const theta = 0.1 + (j / segments) * (Math.PI - 0.2);
 
-        const r = L * Math.pow(Math.sin(theta), 2);
+        const r = L * Math.sin(theta) ** 2;
 
         // Convert spherical to cartesian
         // x = r * sin(theta) * cos(phi)

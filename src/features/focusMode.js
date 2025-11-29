@@ -8,11 +8,11 @@ const FOLLOW_DISTANCE_MULTIPLIER = 5; // Distance from object as multiple of its
 let focusedObject = null;
 let isAnimating = false;
 let animationStartTime = 0;
-let animationStartPosition = new THREE.Vector3();
-let animationStartTarget = new THREE.Vector3();
-let animationEndPosition = new THREE.Vector3();
-let animationEndTarget = new THREE.Vector3();
-let previousObjectPosition = new THREE.Vector3(); // Tracks the object's position in the previous frame
+const animationStartPosition = new THREE.Vector3();
+const animationStartTarget = new THREE.Vector3();
+const animationEndPosition = new THREE.Vector3();
+const animationEndTarget = new THREE.Vector3();
+const previousObjectPosition = new THREE.Vector3(); // Tracks the object's position in the previous frame
 
 /**
  * Sets up the focus mode system with double-click detection
@@ -60,7 +60,7 @@ export function updateFocusMode(camera, controls) {
     const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
 
     // Smooth easing function (ease-in-out)
-    const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+    const eased = progress < 0.5 ? 2 * progress * progress : 1 - (-2 * progress + 2) ** 2 / 2;
 
     // Interpolate camera position and target
     camera.position.lerpVectors(animationStartPosition, animationEndPosition, eased);

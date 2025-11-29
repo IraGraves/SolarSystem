@@ -1,13 +1,12 @@
 import GUI from 'lil-gui';
 import { config, REAL_PLANET_SCALE_FACTOR, REAL_SUN_SCALE_FACTOR } from '../config.js';
-
-import { setupScaleFolder } from './modules/scale.js';
-import { setupVisualFolder, setupOverlaysFolder, setupObjectsFolder } from './modules/visual.js';
-import { setupTimeFolder } from './modules/time.js';
-import { setupFindFolder } from './modules/find.js';
-import { setupNavigationFolder } from './modules/navigation.js';
-import { setupMissionsFolder } from './modules/missions.js';
 import { setupAboutFolder } from './modules/about.js';
+import { setupFindFolder } from './modules/find.js';
+import { setupMissionsFolder } from './modules/missions.js';
+import { setupNavigationFolder } from './modules/navigation.js';
+import { setupScaleFolder } from './modules/scale.js';
+import { setupTimeFolder } from './modules/time.js';
+import { setupObjectsFolder, setupOverlaysFolder, setupVisualFolder } from './modules/visual.js';
 
 /**
  * Sets up the GUI with Scale, Visual, Time, and Navigation sections

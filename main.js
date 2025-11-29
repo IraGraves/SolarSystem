@@ -1,17 +1,32 @@
+/**
+ * @file main.js
+ * @description Main entry point for the White Rabbit solar system simulator.
+ *
+ * This file orchestrates the entire application initialization and animation loop:
+ * 1. Creates the Three.js scene, camera, and renderer
+ * 2. Loads celestial bodies (Sun, planets, moons) with progressive rendering
+ * 3. Sets up UI controls, tooltips, and interaction systems
+ * 4. Initializes additional visual systems (rabbit intro, zodiac signs, habitable zone, magnetic fields)
+ * 5. Asynchronously loads stars and constellations in the background
+ * 6. Runs the main animation loop, updating positions based on simulation time
+ *
+ * The application uses immediate initialization for core objects to provide fast startup,
+ * while loading large data files (stars, constellations) asynchronously after the scene is interactive.
+ */
+
 import * as THREE from 'three';
-import { config } from './src/config.js';
-import { createScene } from './src/core/scene.js';
-import { createStarfield, createConstellations } from './src/core/stars.js';
-import { createPlanets, updatePlanets } from './src/core/planets.js';
-import { setupGUI, updateUI } from './src/ui/gui.js';
 import { setupTooltipSystem } from './interactions.js';
+import { config } from './src/config.js';
+import { createPlanets, updatePlanets } from './src/core/planets.js';
+import { createScene } from './src/core/scene.js';
+import { createConstellations, createStarfield } from './src/core/stars.js';
 import { setupFocusMode, updateFocusMode } from './src/features/focusMode.js';
 import { initializeMissions, updateMissions } from './src/features/missions.js';
-
-import { createRabbit } from './src/systems/rabbit.js';
-import { createZodiacSigns, alignZodiacSigns } from './src/systems/zodiacSigns.js';
 import { createHabitableZone } from './src/systems/habitableZone.js';
 import { createMagneticField } from './src/systems/magneticFields.js';
+import { createRabbit } from './src/systems/rabbit.js';
+import { alignZodiacSigns, createZodiacSigns } from './src/systems/zodiacSigns.js';
+import { setupGUI, updateUI } from './src/ui/gui.js';
 
 // --- Init ---
 (async () => {

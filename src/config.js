@@ -1,3 +1,19 @@
+/**
+ * @file config.js
+ * @description Global configuration state and constants for the White Rabbit solar system simulator.
+ *
+ * This file contains:
+ * - Scale conversion factors (REAL_PLANET_SCALE_FACTOR, REAL_SUN_SCALE_FACTOR)
+ * - Scene unit conversion constants (AU_TO_SCENE)
+ * - Global configuration object (config) with all simulation settings
+ *
+ * The config object is the single source of truth for:
+ * - Time settings (date, speed, stop)
+ * - Visual settings (scales, brightness, gamma)
+ * - Visibility toggles (orbits, axes, objects, overlays, missions)
+ * - Reference plane setting (Equatorial vs Ecliptic)
+ */
+
 // Scale factors that convert slider values to display values
 // e.g., planetScale slider of 1.0 displays as "500x"
 export const REAL_PLANET_SCALE_FACTOR = 500;
@@ -17,6 +33,7 @@ export const config = {
   gamma: 1.0,
   showOrbits: true,
   showAxes: false,
+  showTooltips: true,
   referencePlane: 'Ecliptic', // 'Equatorial' or 'Ecliptic'
   showZodiacs: false, // Constellation lines
   showConstellations: false,

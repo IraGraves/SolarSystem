@@ -1,6 +1,6 @@
-import * as THREE from 'three';
 import * as Astronomy from 'astronomy-engine';
-import { config, AU_TO_SCENE } from './src/config.js';
+import * as THREE from 'three';
+import { AU_TO_SCENE, config } from './src/config.js';
 
 const SCREEN_HIT_RADIUS = 10; // Pixels on screen for hit detection
 
@@ -36,6 +36,13 @@ export function setupTooltipSystem(
 
     // Block tooltips if hovering over the GUI
     if (event.target.closest('.lil-gui')) {
+      tooltip.style.display = 'none';
+      document.body.style.cursor = 'default';
+      return;
+    }
+
+    // Check if tooltips are enabled
+    if (!config.showTooltips) {
       tooltip.style.display = 'none';
       document.body.style.cursor = 'default';
       return;

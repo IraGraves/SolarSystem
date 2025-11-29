@@ -41,8 +41,8 @@ export function setupScaleFolder(gui, uiState, planets, sun) {
   addValueDisplay(sunSlider, (val) => val.toFixed(0) + 'x');
 
   // Helper to convert between scale (1-2500) and slider t (0-1)
-  const toSlider = (scale) => Math.pow((scale - 1) / (REAL_PLANET_SCALE_FACTOR * 5 - 1), 1 / 3);
-  const toScale = (t) => 1 + (REAL_PLANET_SCALE_FACTOR * 5 - 1) * Math.pow(t, 3);
+  const toSlider = (scale) => ((scale - 1) / (REAL_PLANET_SCALE_FACTOR * 5 - 1)) ** (1 / 3);
+  const toScale = (t) => 1 + (REAL_PLANET_SCALE_FACTOR * 5 - 1) * t ** 3;
 
   // Proxy for slider control
   const sliderProxy = {
@@ -85,7 +85,7 @@ export function setupScaleFolder(gui, uiState, planets, sun) {
     } else if (val === 'Artistic') {
       sunSlider.setValue(1.0 * REAL_SUN_SCALE_FACTOR); // 20x
       // Calculate t for 500x
-      const t = Math.pow((500 - 1) / (REAL_PLANET_SCALE_FACTOR * 5 - 1), 1 / 3);
+      const t = ((500 - 1) / (REAL_PLANET_SCALE_FACTOR * 5 - 1)) ** (1 / 3);
       planetSlider.setValue(t);
     }
     // Custom doesn't change values, just indicates manual adjustment

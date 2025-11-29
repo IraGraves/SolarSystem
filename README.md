@@ -8,12 +8,17 @@ Just another solar system simulator - follow the white rabbit! An interactive 3D
 - **Realistic Rotation**: Planets and the Sun rotate based on their actual rotation periods (e.g., Earth rotates once every 24 hours, Sun every 25 days)
 - **Tidal Locking**: Moons like Earth's Moon are tidally locked, always showing the same face to their parent planet
 - **Real Starfield**: Star positions based on actual astronomical data with accurate right ascension and declination
+- **Constellations**: Toggle zodiac constellations and all 88 astronomical constellations with accurate star-to-star connections
 - **Adjustable Scaling**: Artistic (500x planets, 20x sun, 100x moon orbits) or Realistic (1x) preset modes
 - **Focus Mode**: Double-click any celestial body to follow it with the camera
-- **Mission Trajectories**: Visualize the paths of historic space missions (Voyager 1 & 2, Pioneer 10 & 11, Galileo)
+- **Mission Trajectories**: Visualize the paths of historic space missions (Voyager 1 & 2, Pioneer 10 & 11, Galileo, Cassini, New Horizons, Parker Solar Probe, Juno, Rosetta, Ulysses)
 - **Axis Visualization**: Toggle rotation axes for all celestial bodies
 - **Interactive Controls**: Camera controls, time speed adjustment, orbit visualization, and dynamic scaling
-- **Moon Systems**: Detailed representation of Earth's Moon, Jupiter's Galilean moons, and Saturn's Titan
+- **Moon Systems**: Detailed representation of Earth's Moon, Jupiter's Galilean moons, Saturn's major moons, and more
+- **Magnetic Fields**: Visualize planetary and lunar magnetic fields (Earth, Jupiter, Saturn, Uranus, Neptune, Ganymede)
+- **Zodiac Signs**: Optional overlay of zodiac sign sprites aligned with their constellations
+- **Habitable Zone**: Toggle display of the Sun's habitable zone (Goldilocks zone)
+
 
 ## User Interface
 
@@ -28,13 +33,21 @@ The UI is organized into four collapsible sections (all closed by default):
 ### Objects
 - **Sun**: Toggle visibility of the Sun
 - **Planets**: Toggle visibility of major planets
-- **Moons**: Toggle visibility of moons
+- **Largest Moons**: Toggle visibility of the largest moons (Moon, Io, Europa, Ganymede, Callisto, Titan)
+- **Major Moons**: Toggle additional major moons
+- **Small Moons**: Toggle visibility of smaller moons
 - **Dwarf Planets**: Toggle visibility of Ceres and Pluto
 
 ### Overlays
 - **Orbits**: Toggle planet and moon orbit lines
+  - **Cap Moon Orbits When Scaling**: Limit moon orbit visual scaling
 - **Axes**: Toggle rotation axis lines for sun, planets, and moons
 - **Zodiacs**: Toggle zodiac constellation lines
+- **Constellations**: Toggle all 88 constellation lines
+- **Zodiac Signs**: Toggle zodiac sign sprite overlays
+- **Habitable Zone**: Toggle Sun's habitable zone visualization
+- **Magnetic Fields**: Toggle magnetic field visualizations
+  - **Cap When Scaling**: Limit magnetic field visual scaling
 
 ### Missions
 - **Voyager 1 (1977)** - Cyan
@@ -42,6 +55,12 @@ The UI is organized into four collapsible sections (all closed by default):
 - **Pioneer 10 (1972)** - Orange
 - **Pioneer 11 (1973)** - Lime Green
 - **Galileo (1989)** - Gold
+- **Cassini (1997)** - Deep Pink
+- **New Horizons (2006)** - Sky Blue
+- **Parker Solar Probe (2018)** - Red
+- **Juno (2011)** - Purple
+- **Rosetta (2004)** - Green
+- **Ulysses (1990)** - Yellow
 
 ### Visual
 - **Star Brightness**: Adjust starfield brightness and size
@@ -172,6 +191,25 @@ The simulation uses a dual-scaling system:
 2. **Slider Values**: Internal values (0.002-5.0 for planets, 0.05-5.0 for sun, 0.1-10 for moon orbits)
 
 The constants `REAL_PLANET_SCALE_FACTOR` and `REAL_SUN_SCALE_FACTOR` convert between these, allowing intuitive "1x = realistic" display while maintaining precise control.
+
+## Scripts
+
+The `scripts/` directory contains utility scripts for development and debugging:
+
+### Debug Scripts (`scripts/debug/`)
+
+- **`debug_coords.js`**: Verifies coordinate system (Equatorial vs Ecliptic) by checking Earth's position at J2000 epoch
+- **`inspect_star.js`**: Inspects specific star data from the star catalog (uses Node.js with fs)
+- **`test_moons.js`**: Tests Jovian moon position calculations using Astronomy Engine
+
+To run debug scripts:
+```bash
+node scripts/debug/debug_coords.js
+node scripts/debug/inspect_star.js
+node scripts/debug/test_moons.js
+```
+
+---
 
 ## Development
 

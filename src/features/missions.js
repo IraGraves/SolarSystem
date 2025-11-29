@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { config, AU_TO_SCENE } from '../config.js';
+import { AU_TO_SCENE, config } from '../config.js';
 
 /**
  * Simplified Mission trajectory data
@@ -156,7 +156,7 @@ const ulyssesWaypoints = [
   { pos: new THREE.Vector3(5.4, 0, 0.6), date: '2009-06-30' }, // End of mission
 ];
 
-let missionLines = {};
+const missionLines = {};
 
 /**
  * Initialize mission trajectories and add them to the scene

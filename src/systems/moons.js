@@ -1,6 +1,6 @@
-import * as THREE from 'three';
 import * as Astronomy from 'astronomy-engine';
-import { config, AU_TO_SCENE, REAL_PLANET_SCALE_FACTOR } from '../config.js';
+import * as THREE from 'three';
+import { AU_TO_SCENE, config, REAL_PLANET_SCALE_FACTOR } from '../config.js';
 
 /**
  * Get approximate orbital distance for a planet in AU
@@ -10,7 +10,7 @@ function getPlanetDistanceAU(planetData) {
 
   // Use Kepler's 3rd law: T² ∝ a³ where T is in Earth years, a is in AU
   const periodYears = planetData.period / 365.25;
-  return Math.pow(periodYears, 2 / 3);
+  return periodYears ** (2 / 3);
 }
 
 // --- Moon Creation Helper Functions ---

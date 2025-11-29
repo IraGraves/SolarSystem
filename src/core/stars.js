@@ -109,7 +109,7 @@ export async function createStarfield(scene) {
       sizes.push(size);
 
       // Initial Name (ID or HD number)
-      let commonName = star.n;
+      const commonName = star.n;
 
       processedData.push({
         id: star.i,

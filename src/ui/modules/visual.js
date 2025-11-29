@@ -1,5 +1,5 @@
-import * as THREE from 'three';
 import * as Astronomy from 'astronomy-engine';
+import * as THREE from 'three';
 import { config, REAL_PLANET_SCALE_FACTOR } from '../../config.js';
 
 export function setupVisualFolder(gui, starsRef, renderer, universeGroup) {
@@ -55,7 +55,7 @@ export function setupVisualFolder(gui, starsRef, renderer, universeGroup) {
         // Exponential boost from 1.0 to 100.0
         // (val - 0.8) / 0.2 goes 0 -> 1
         const t = (val - 0.8) / 0.2;
-        intensity = 1.0 + Math.pow(t, 3) * 99.0;
+        intensity = 1.0 + t ** 3 * 99.0;
       }
 
       stars.material.opacity = opacity;
@@ -89,6 +89,10 @@ export function setupVisualFolder(gui, starsRef, renderer, universeGroup) {
       }
     });
   gammaSlider.domElement.classList.add('hide-value');
+
+  // Tooltips
+  const tooltipsCtrl = visualFolder.add(config, 'showTooltips').name('Tooltips');
+  tooltipsCtrl.domElement.classList.add('checkbox-left');
 
   visualFolder.close(); // Close Visual folder by default
 }

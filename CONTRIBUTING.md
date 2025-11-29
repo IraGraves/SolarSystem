@@ -253,6 +253,43 @@ export function calculateOrbitalVelocity(a, r) {
 
 ---
 
+## Code Quality
+
+### Linting and Formatting
+
+This project uses **Biome** for code linting and formatting. Always run these commands before committing:
+
+```bash
+# Check for linting issues
+npm run lint
+
+# Auto-fix linting issues
+npm run lint:fix
+
+# Format code
+npm run format
+
+# Run both linting and formatting
+npm run check
+```
+
+**Best Practices**:
+- Run `npm run check` before committing to catch issues early
+- Fix all linting errors before submitting a pull request
+- Biome will automatically format your code to match project style
+
+### File Placement Guidelines
+
+**When to create a new file in `systems/` vs `features/`:**
+- **`systems/`**: Self-contained visual or physics systems (orbits, rings, moons, stars, magnetic fields)
+- **`features/`**: User-facing application features (focus mode, missions, interactions)
+
+**When to add to `core/` vs create a new module:**
+- **`core/`**: Fundamental rendering logic directly tied to the main scene graph (planets, stars, scene setup)
+- **New module**: Specialized functionality that can be independently managed
+
+---
+
 ## Testing
 
 ### Manual Testing Checklist

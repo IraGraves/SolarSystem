@@ -114,7 +114,7 @@ export function createRabbit(renderer) {
       if (state.phase === 'enter') {
         const progress = Math.min(elapsed / config.enterDuration, 1.0);
         // Ease out cubic
-        const ease = 1 - Math.pow(1 - progress, 3);
+        const ease = 1 - (1 - progress) ** 3;
 
         rabbitGroup.position.lerpVectors(config.startPosition, config.targetPosition, ease);
 

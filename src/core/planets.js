@@ -1,11 +1,11 @@
-import * as THREE from 'three';
 import * as Astronomy from 'astronomy-engine';
-import { config, AU_TO_SCENE, REAL_PLANET_SCALE_FACTOR } from '../config.js';
-import { planetData, dwarfPlanetData } from '../data/bodies.js';
+import * as THREE from 'three';
+import { AU_TO_SCENE, config, REAL_PLANET_SCALE_FACTOR } from '../config.js';
+import { dwarfPlanetData, planetData } from '../data/bodies.js';
 import { calculateKeplerianPosition } from '../physics/orbits.js';
-import { createRing } from '../systems/rings.js';
 import { createMoons, updateMoonPositions } from '../systems/moons.js';
 import { createOrbitLine } from '../systems/orbits.js';
+import { createRing } from '../systems/rings.js';
 
 // --- Planet Creation Helper Functions ---
 
