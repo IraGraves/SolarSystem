@@ -157,10 +157,17 @@ export function updateRelativeOrbits(orbitGroup, relativeOrbitGroup, planets, su
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       
       const isSun = data.name === 'Sun';
+      const showColors = config.showPlanetColors;
+      const showDwarfColors = config.showDwarfPlanetColors;
+      const isDwarf = data.type === 'dwarf';
+      const useColor = isDwarf ? showDwarfColors : showColors;
+      
+      const color = isSun ? (data.color || 0xffff00) : (useColor ? (data.color || 0x444444) : 0x444444);
+      
       const material = new THREE.LineBasicMaterial({
-        color: isSun ? (data.color || 0xffff00) : 0x444444,
+        color: color,
         transparent: true,
-        opacity: isSun ? 0.8 : 0.5,
+        opacity: isSun ? 0.8 : (useColor ? 0.8 : 0.5),
       });
       
       line = new THREE.Line(geometry, material);

@@ -45,6 +45,7 @@ function createMoonMesh(moonData, textureLoader) {
   const moonMesh = new THREE.Mesh(moonGeo, moonMat);
   moonMesh.castShadow = true;
   moonMesh.receiveShadow = true;
+  moonMesh.userData.isMoon = true; // Tag for visibility logic
 
   // Apply initial scale
   moonMesh.scale.setScalar(config.planetScale);
@@ -189,9 +190,9 @@ function createRealOrbitLine(moonData, orbitLinesGroup) {
   // Create empty geometry initially
   const orbitGeo = new THREE.BufferGeometry();
   const orbitMat = new THREE.LineBasicMaterial({
-    color: 0x888888,
+    color: 0x666666,
     transparent: true,
-    opacity: 0.5,
+    opacity: 0.3,
   });
   const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
   orbitLinesGroup.add(orbitLine);
@@ -237,6 +238,18 @@ export function createMoons(planetData, planetGroup, orbitLinesGroup, textureLoa
       // Earth's Moon and other real moons
       createRealOrbitLine(moonData, orbitLinesGroup);
     }
+
+    // Set initial visibility based on category
+    let isVisible = false;
+    if (moonData.category === 'largest' && config.showLargestMoons) isVisible = true;
+    else if (moonData.category === 'major' && config.showMajorMoons) isVisible = true;
+    else if (moonData.category === 'small' && config.showSmallMoons) isVisible = true;
+    
+    // Fallback: if no category, default to visible (or hidden? let's say visible to be safe)
+    if (!moonData.category) isVisible = true;
+
+    moonMesh.visible = isVisible;
+    if (moonData.orbitLine) moonData.orbitLine.visible = isVisible;
 
     moons.push({ mesh: moonMesh, data: moonData });
   });
@@ -324,16 +337,8 @@ export function updateMoonPositions(planet, planetIndex, allPlanets) {
       orbitDist = m.data.distance * AU_TO_SCENE * baseScale;
     }
 
-    // Check visibility based on category
-    let isVisible = false;
-    if (m.data.category === 'largest' && config.showLargestMoons) isVisible = true;
-    else if (m.data.category === 'major' && config.showMajorMoons) isVisible = true;
-    else if (m.data.category === 'small' && config.showSmallMoons) isVisible = true;
-
-    // Always include if no category (fallback) or if visible
-    if (!m.data.category || isVisible) {
-      moonOrbits.push(orbitDist);
-    }
+    // Always include in capping calculation to ensure stable orbits
+    moonOrbits.push(orbitDist);
   });
 
   // Calculate remapping parameters

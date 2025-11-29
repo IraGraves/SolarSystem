@@ -1,6 +1,6 @@
 import * as Astronomy from 'astronomy-engine';
 import * as THREE from 'three';
-import { AU_TO_SCENE } from '../config.js';
+import { AU_TO_SCENE, config } from '../config.js';
 import { calculateKeplerianPosition } from '../physics/orbits.js';
 
 /**
@@ -28,10 +28,16 @@ export function createOrbitLine(data, orbitGroup) {
   }
 
   const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
+  const showColors = config.showPlanetColors;
+  const showDwarfColors = config.showDwarfPlanetColors;
+  const isDwarf = data.type === 'dwarf';
+  const useColor = isDwarf ? showDwarfColors : showColors;
+  const color = useColor ? (data.color || 0x444444) : 0x444444;
+
   const orbitMat = new THREE.LineBasicMaterial({
-    color: 0x444444,
+    color: color,
     transparent: true,
-    opacity: 0.5,
+    opacity: useColor ? 0.8 : 0.5,
   });
   const orbitLine = new THREE.LineLoop(orbitGeo, orbitMat);
   orbitLine.name = data.name + '_Orbit';

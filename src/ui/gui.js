@@ -76,7 +76,8 @@ export function setupGUI(
     sun,
     zodiacSignsGroup,
     habitableZone,
-    magneticFieldsGroup
+    magneticFieldsGroup,
+    relativeOrbitGroup // Added
   );
 
   // --- SCALE SECTION ---

@@ -76,7 +76,12 @@ export function setupVisualFolder(
 
   // Coordinate System (Origin)
   visualFolder
-    .add(config, 'coordinateSystem', ['Heliocentric', 'Geocentric', 'Barycentric', 'Tychonic'])
+    .add(config, 'coordinateSystem', {
+      'Center of Mass (Barycentric)': 'Barycentric',
+      'Earth (Geocentric)': 'Geocentric',
+      'Earth (Tychonic)': 'Tychonic',
+      'Sun (Heliocentric)': 'Heliocentric',
+    })
     .name('Origin')
     .onChange(() => {
       updateCoordinateSystem(universeGroup, planets, sun);
@@ -122,7 +127,22 @@ export function updateOrbitsVisibility(val, orbitGroup, planets, capMoonOrbitsCt
   orbitGroup.visible = val;
   planets.forEach((p) => {
     p.moons.forEach((m) => {
-      if (m.data.orbitLine) m.data.orbitLine.visible = val;
+      if (m.data.orbitLine) {
+        if (!val) {
+          m.data.orbitLine.visible = false;
+        } else {
+          // Only enable if category is enabled
+          let isVisible = false;
+          if (m.data.category === 'largest' && config.showLargestMoons) isVisible = true;
+          else if (m.data.category === 'major' && config.showMajorMoons) isVisible = true;
+          else if (m.data.category === 'small' && config.showSmallMoons) isVisible = true;
+          
+          // Fallback
+          if (!m.data.category) isVisible = true;
+          
+          m.data.orbitLine.visible = isVisible;
+        }
+      }
     });
   });
   if (capMoonOrbitsCtrl) {
@@ -256,15 +276,15 @@ export function setupOverlaysFolder(
   sun,
   zodiacSignsGroup,
   habitableZone,
-  magneticFieldsGroup
+  magneticFieldsGroup,
+  relativeOrbitGroup // Added
 ) {
   const overlaysFolder = gui.addFolder('Overlays');
 
   // Orbits
   const orbitsCtrl = overlaysFolder
     .add(config, 'showOrbits')
-    .name('Orbits')
-    .onChange((val) => updateOrbitsVisibility(val, orbitGroup, planets, capMoonOrbitsCtrl));
+    .name('Orbits');
   orbitsCtrl.domElement.classList.add('checkbox-left');
 
   const capMoonOrbitsCtrl = overlaysFolder
@@ -277,6 +297,36 @@ export function setupOverlaysFolder(
 
   // Show/hide child control based on parent state
   updateOrbitsVisibility(config.showOrbits, orbitGroup, planets, capMoonOrbitsCtrl);
+
+  const planetColorsCtrl = overlaysFolder
+    .add(config, 'showPlanetColors')
+    .name('Planet Colors')
+    .onChange(() => {
+       // Trigger update of orbit colors
+       // We need to call updateRelativeOrbits and also update standard orbits material
+       // Since standard orbits are static lines, we might need to traverse and update material color
+       updateOrbitColors(orbitGroup, relativeOrbitGroup, planets);
+    });
+  planetColorsCtrl.domElement.classList.add('child-control', 'checkbox-left');
+
+  const dwarfPlanetColorsCtrl = overlaysFolder
+    .add(config, 'showDwarfPlanetColors')
+    .name('Dwarf Planet Colors')
+    .onChange(() => {
+       updateOrbitColors(orbitGroup, relativeOrbitGroup, planets);
+    });
+  dwarfPlanetColorsCtrl.domElement.classList.add('child-control', 'checkbox-left');
+  
+  // Let's update the Orbits onChange to toggle this control too.
+  orbitsCtrl.onChange((val) => {
+    updateOrbitsVisibility(val, orbitGroup, planets, capMoonOrbitsCtrl);
+    planetColorsCtrl.domElement.style.display = val ? '' : 'none';
+    dwarfPlanetColorsCtrl.domElement.style.display = val ? '' : 'none';
+  });
+  
+  // Init visibility
+  planetColorsCtrl.domElement.style.display = config.showOrbits ? '' : 'none';
+  dwarfPlanetColorsCtrl.domElement.style.display = config.showOrbits ? '' : 'none';
 
   // Axes
   const axesCtrl = overlaysFolder
@@ -357,8 +407,10 @@ export function updatePlanetVisibility(val, planets) {
       // Rings should also be toggled
       p.group.children.forEach((child) => {
         if (child !== p.mesh && child !== p.orbitLinesGroup && child.type === 'Mesh') {
-          // This catches rings
-          child.visible = val;
+          if (!child.userData.isMoon) {
+             // This catches rings
+             child.visible = val;
+          }
         }
       });
     }
@@ -430,4 +482,45 @@ export function setupObjectsFolder(gui, planets, sun) {
   updateMoonVisibility(config.showSmallMoons, planets, 'small');
 
   objectsFolder.close();
+}
+
+export function updateOrbitColors(orbitGroup, relativeOrbitGroup, planets) {
+  const showColors = config.showPlanetColors;
+  const showDwarfColors = config.showDwarfPlanetColors;
+  console.log('updateOrbitColors called. showColors:', showColors, 'showDwarfColors:', showDwarfColors);
+
+  // 1. Update Standard Orbits (Heliocentric / Tychonic)
+  orbitGroup.children.forEach((line) => {
+    // if (line.name === 'Earth_Orbit') return; // Removed exclusion
+    
+    const planetName = line.name.replace('_Orbit', '');
+    const planet = planets.find(p => p.data.name === planetName);
+    
+    if (planet) {
+      const isDwarf = planet.data.type === 'dwarf';
+      const useColor = isDwarf ? showDwarfColors : showColors;
+      const color = useColor ? (planet.data.color || 0x444444) : 0x444444;
+      if (line.material) {
+        line.material.color.setHex(color);
+        line.material.opacity = useColor ? 0.8 : 0.5;
+      }
+    }
+  });
+
+  // 2. Update Relative Orbits
+  relativeOrbitGroup.children.forEach((line) => {
+    const bodyName = line.name.replace('_Trail', '');
+    if (bodyName === 'Sun') return;
+
+    const planet = planets.find(p => p.data.name === bodyName);
+    if (planet) {
+      const isDwarf = planet.data.type === 'dwarf';
+      const useColor = isDwarf ? showDwarfColors : showColors;
+      const color = useColor ? (planet.data.color || 0x444444) : 0x444444;
+      if (line.material) {
+        line.material.color.setHex(color);
+        line.material.opacity = useColor ? 0.8 : 0.5;
+      }
+    }
+  });
 }
