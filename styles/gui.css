@@ -368,3 +368,135 @@
   width: auto !important;
   min-width: auto !important;
 }
+
+/* Events Section */
+.events-container {
+  padding: 4px 0;
+}
+
+.events-input-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.events-input-wrapper label {
+  color: #ffffff;
+  font-size: 0.9em;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+
+#events-search {
+  flex: 1;
+  max-width: 70%;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+#events-search:focus {
+  outline: none;
+  border-color: #88ccff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.events-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  z-index: 999999 !important;
+  display: none;
+}
+
+.events-result-item {
+  padding: 4px 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85em;
+}
+
+.events-result-item:hover {
+  background: #333;
+  color: #88ccff;
+}
+
+.events-result-item .event-type {
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.events-result-item .event-type.total-eclipse {
+  background: rgba(255, 100, 100, 0.3);
+  color: #ffaaaa;
+  border: 1px solid rgba(255, 100, 100, 0.5);
+}
+
+.events-result-item .event-type.annular-eclipse {
+  background: rgba(255, 200, 100, 0.3);
+  color: #ffddaa;
+  border: 1px solid rgba(255, 200, 100, 0.5);
+}
+
+.events-result-item .event-date {
+  color: #aaa;
+  font-size: 0.9em;
+}
+
+.events-actions {
+  display: flex;
+  width: 70%;
+  margin-left: auto;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.events-actions button {
+  flex: 1;
+  padding: 6px 12px;
+  background: #333;
+  border: 1px solid #555;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.events-actions button:hover:not(:disabled) {
+  background: #444;
+  border-color: #88ccff;
+}
+
+.events-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#events-status {
+  font-size: 0.85em;
+  color: #88ccff;
+  min-height: 1.2em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}

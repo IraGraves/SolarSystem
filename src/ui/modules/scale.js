@@ -97,5 +97,25 @@ export function setupScaleFolder(gui, uiState, planets, sun) {
   // Initial update to apply defaults
   updateMagneticFieldScales(planets);
 
-  return {};
+  return {
+    setScalePreset: (preset) => {
+      uiState.scalePreset = preset;
+      presetController.updateDisplay();
+
+      // Manually trigger the logic that happens when preset changes
+      // We can't just call setValue on presetController because it might not trigger onChange if value is same?
+      // Actually, let's just duplicate the logic or extract it.
+      // Simpler: just call the onChange handler logic directly.
+
+      if (preset === 'Realistic') {
+        sunSlider.setValue(1); // 1x
+        planetSlider.setValue(0); // t=0 -> 1x
+      } else if (preset === 'Artistic') {
+        sunSlider.setValue(1.0 * REAL_SUN_SCALE_FACTOR); // 20x
+        // Calculate t for 500x
+        const t = ((500 - 1) / (REAL_PLANET_SCALE_FACTOR * 5 - 1)) ** (1 / 3);
+        planetSlider.setValue(t);
+      }
+    },
+  };
 }

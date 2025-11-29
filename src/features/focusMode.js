@@ -116,8 +116,14 @@ export function updateFocusMode(camera, controls) {
  * @param {Object} targetObject - Object to focus on (with mesh and data)
  * @param {THREE.Camera} camera - The scene camera
  * @param {Object} controls - OrbitControls instance
+ * @param {number} [distanceMultiplier=FOLLOW_DISTANCE_MULTIPLIER] - Optional multiplier for camera distance
  */
-export function focusOnObject(targetObject, camera, controls) {
+export function focusOnObject(
+  targetObject,
+  camera,
+  controls,
+  distanceMultiplier = FOLLOW_DISTANCE_MULTIPLIER
+) {
   // If we are already focused on a different object, revert its resolution
   if (focusedObject && focusedObject !== targetObject) {
     disableHighRes(focusedObject);
@@ -147,7 +153,7 @@ export function focusOnObject(targetObject, camera, controls) {
   const visualRadius = radius * currentScale;
 
   // Calculate distance based on visual size
-  const distance = visualRadius * FOLLOW_DISTANCE_MULTIPLIER;
+  const distance = visualRadius * distanceMultiplier;
 
   // Position camera in front and slightly above the object
   const angle = Math.PI / 6; // 30 degrees above

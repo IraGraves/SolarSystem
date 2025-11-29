@@ -1,6 +1,7 @@
 import GUI from 'lil-gui';
 import { config, REAL_PLANET_SCALE_FACTOR, REAL_SUN_SCALE_FACTOR } from '../config.js';
 import { setupAboutFolder } from './modules/about.js';
+import { setupEventsFolder } from './modules/events.js';
 import { setupFindFolder } from './modules/find.js';
 import { setupMissionsFolder } from './modules/missions.js';
 import { setupNavigationFolder } from './modules/navigation.js';
@@ -78,13 +79,16 @@ export function setupGUI(
   );
 
   // --- SCALE SECTION ---
-  setupScaleFolder(gui, uiState, planets, sun);
+  const scaleCtrl = setupScaleFolder(gui, uiState, planets, sun);
 
   // --- VISUAL SECTION ---
   setupVisualFolder(gui, starsRef, renderer, universeGroup);
 
   // --- MISSIONS SECTION ---
   setupMissionsFolder(gui, config);
+
+  // --- EVENTS SECTION ---
+  setupEventsFolder(gui, camera, controls, planets, scaleCtrl.setScalePreset);
 
   // --- NAVIGATION SECTION ---
   setupNavigationFolder(gui, uiState);
