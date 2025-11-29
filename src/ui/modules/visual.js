@@ -281,24 +281,54 @@ export function setupOverlaysFolder(
 ) {
   const overlaysFolder = gui.addFolder('Overlays');
 
-  // Orbits
-  const orbitsCtrl = overlaysFolder
+  // Constellations Folder
+  const constellationsFolder = overlaysFolder.addFolder('Constellations');
+  constellationsFolder.domElement.classList.add('constellations-folder');
+  constellationsFolder.close();
+
+  // Constellations (All 88)
+  const constellationsCtrl = constellationsFolder
+    .add(config, 'showConstellations')
+    .name('Constellations (All)')
+    .onChange(() => updateConstellationsVisibility(zodiacGroup, constellationsGroup));
+  constellationsCtrl.domElement.classList.add('checkbox-left');
+
+  // Zodiacs
+  const zodiacsCtrl = constellationsFolder
+    .add(config, 'showZodiacs')
+    .name('Zodiacs')
+    .onChange(() => updateConstellationsVisibility(zodiacGroup, constellationsGroup));
+  zodiacsCtrl.domElement.classList.add('checkbox-left');
+
+  // Zodiac Signs
+  const zodiacSignsCtrl = constellationsFolder
+    .add(config, 'showZodiacSigns')
+    .name('Zodiac Signs')
+    .onChange((val) => updateZodiacSignsVisibility(val, zodiacSignsGroup));
+  zodiacSignsCtrl.domElement.classList.add('checkbox-left');
+
+  // Orbits Folder
+  const orbitsFolder = overlaysFolder.addFolder('Orbits');
+  orbitsFolder.domElement.classList.add('orbits-folder');
+  orbitsFolder.close();
+
+  const orbitsCtrl = orbitsFolder
     .add(config, 'showOrbits')
-    .name('Orbits');
+    .name('Show');
   orbitsCtrl.domElement.classList.add('checkbox-left');
 
-  const capMoonOrbitsCtrl = overlaysFolder
+  const capMoonOrbitsCtrl = orbitsFolder
     .add(config, 'capMoonOrbits')
     .name('Cap Moon Orbits When Scaling')
     .onChange(() => {
       // Moon positions will be updated in the next animation frame
     });
-  capMoonOrbitsCtrl.domElement.classList.add('child-control', 'checkbox-left');
+  capMoonOrbitsCtrl.domElement.classList.add('checkbox-left');
 
   // Show/hide child control based on parent state
-  updateOrbitsVisibility(config.showOrbits, orbitGroup, planets, capMoonOrbitsCtrl);
+  updateOrbitsVisibility(config.showOrbits, orbitGroup, planets, null);
 
-  const planetColorsCtrl = overlaysFolder
+  const planetColorsCtrl = orbitsFolder
     .add(config, 'showPlanetColors')
     .name('Planet Colors')
     .onChange(() => {
@@ -307,26 +337,20 @@ export function setupOverlaysFolder(
        // Since standard orbits are static lines, we might need to traverse and update material color
        updateOrbitColors(orbitGroup, relativeOrbitGroup, planets);
     });
-  planetColorsCtrl.domElement.classList.add('child-control', 'checkbox-left');
+  planetColorsCtrl.domElement.classList.add('checkbox-left');
 
-  const dwarfPlanetColorsCtrl = overlaysFolder
+  const dwarfPlanetColorsCtrl = orbitsFolder
     .add(config, 'showDwarfPlanetColors')
     .name('Dwarf Planet Colors')
     .onChange(() => {
        updateOrbitColors(orbitGroup, relativeOrbitGroup, planets);
     });
-  dwarfPlanetColorsCtrl.domElement.classList.add('child-control', 'checkbox-left');
+  dwarfPlanetColorsCtrl.domElement.classList.add('checkbox-left');
   
-  // Let's update the Orbits onChange to toggle this control too.
+  // Let's update the Orbits onChange to toggle visibility of orbits
   orbitsCtrl.onChange((val) => {
-    updateOrbitsVisibility(val, orbitGroup, planets, capMoonOrbitsCtrl);
-    planetColorsCtrl.domElement.style.display = val ? '' : 'none';
-    dwarfPlanetColorsCtrl.domElement.style.display = val ? '' : 'none';
+    updateOrbitsVisibility(val, orbitGroup, planets, null);
   });
-  
-  // Init visibility
-  planetColorsCtrl.domElement.style.display = config.showOrbits ? '' : 'none';
-  dwarfPlanetColorsCtrl.domElement.style.display = config.showOrbits ? '' : 'none';
 
   // Axes
   const axesCtrl = overlaysFolder
@@ -335,26 +359,7 @@ export function setupOverlaysFolder(
     .onChange((val) => updateAxesVisibility(val, sun, planets));
   axesCtrl.domElement.classList.add('checkbox-left');
 
-  // Zodiacs
-  const zodiacsCtrl = overlaysFolder
-    .add(config, 'showZodiacs')
-    .name('Zodiacs')
-    .onChange(() => updateConstellationsVisibility(zodiacGroup, constellationsGroup));
-  zodiacsCtrl.domElement.classList.add('checkbox-left');
 
-  // Constellations (All 88)
-  const constellationsCtrl = overlaysFolder
-    .add(config, 'showConstellations')
-    .name('Constellations (All)')
-    .onChange(() => updateConstellationsVisibility(zodiacGroup, constellationsGroup));
-  constellationsCtrl.domElement.classList.add('checkbox-left');
-
-  // Zodiac Signs
-  const zodiacSignsCtrl = overlaysFolder
-    .add(config, 'showZodiacSigns')
-    .name('Zodiac Signs')
-    .onChange((val) => updateZodiacSignsVisibility(val, zodiacSignsGroup));
-  zodiacSignsCtrl.domElement.classList.add('checkbox-left');
 
   // Habitable Zone
   const habitableZoneCtrl = overlaysFolder

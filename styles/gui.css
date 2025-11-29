@@ -3,6 +3,11 @@
   color: #aaccff;
 }
 
+.lil-gui .orbits-folder .title,
+.lil-gui .constellations-folder .title {
+  color: #e2e2e2;
+}
+
 .find-container {
   padding: 4px 0;
 }
