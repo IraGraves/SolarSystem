@@ -12,6 +12,7 @@ export class MusicSystem {
     this.currentTrackIndex = -1;
     this.isPlaying = false;
     this.initialized = false;
+    this.playHistory = []; // Track previously played songs
 
     // Bind methods
     this.handleTrackEnded = this.handleTrackEnded.bind(this);
@@ -33,6 +34,11 @@ export class MusicSystem {
       // Initialize playlist in config if empty (select all by default)
       if (config.music.playlist.length === 0) {
         config.music.playlist = this.tracks.map((t) => t.id);
+      }
+
+      // If volume is > 0, ensure enabled is true so it starts playing
+      if (config.music.volume > 0) {
+        config.music.enabled = true;
       }
 
       // If config.music.enabled is true on startup, we might want to start playing.
@@ -83,9 +89,6 @@ export class MusicSystem {
   }
 
   /**
-   * Play the next track in the playlist.
-   */
-  /**
    * Set the volume and toggle playback if needed.
    * @param {number} volume - Volume level (0.0 to 1.0).
    */
@@ -115,19 +118,61 @@ export class MusicSystem {
 
     if (playlistTracks.length === 0) return;
 
-    // If current track is in playlist, find its index in the filtered list
-    const currentId = this.tracks[this.currentTrackIndex]?.id;
-    const currentPlaylistIndex = playlistTracks.findIndex((t) => t.id === currentId);
+    let nextPlaylistTrack;
 
-    // Pick next one wrapping around
-    const nextPlaylistTrack = playlistTracks[(currentPlaylistIndex + 1) % playlistTracks.length];
+    if (config.music.shuffle) {
+      // Pick random track
+      const randomIndex = Math.floor(Math.random() * playlistTracks.length);
+      nextPlaylistTrack = playlistTracks[randomIndex];
+    } else {
+      // If current track is in playlist, find its index in the filtered list
+      const currentId = this.tracks[this.currentTrackIndex]?.id;
+      const currentPlaylistIndex = playlistTracks.findIndex((t) => t.id === currentId);
+
+      // Pick next one wrapping around
+      nextPlaylistTrack = playlistTracks[(currentPlaylistIndex + 1) % playlistTracks.length];
+    }
+
+    // Add current track to history BEFORE switching
+    if (this.currentTrackIndex !== -1) {
+      const currentTrack = this.tracks[this.currentTrackIndex];
+      if (currentTrack) {
+        this.playHistory.push(currentTrack.id);
+        // Keep history limited to last 50 tracks
+        if (this.playHistory.length > 50) {
+          this.playHistory.shift();
+        }
+      }
+    }
 
     // Find its real index in this.tracks
     this.currentTrackIndex = this.tracks.findIndex((t) => t.id === nextPlaylistTrack.id);
 
     if (this.currentTrackIndex !== -1) {
-      this.loadAndPlay(this.tracks[this.currentTrackIndex]);
+      this.loadAndPlay(this.tracks[this.currentTrackIndex], true); // Skip history in loadAndPlay
     }
+  }
+
+  /**
+   * Play the previous track in the playlist.
+   */
+  playPrevious() {
+    // If we have history, go back to the last played track
+    if (this.playHistory.length > 0) {
+      const previousTrackId = this.playHistory.pop(); // Remove and get last item
+      const trackIndex = this.tracks.findIndex((t) => t.id === previousTrackId);
+
+      if (trackIndex !== -1) {
+        this.currentTrackIndex = trackIndex;
+        // Don't add to history when going back
+        const trackToPlay = this.tracks[this.currentTrackIndex];
+        this.loadAndPlay(trackToPlay, true); // Pass true to skip history recording
+        return;
+      }
+    }
+
+    // No history available, do nothing
+    console.log('No previous track in history');
   }
 
   /**
@@ -135,23 +180,29 @@ export class MusicSystem {
    * @param {Object} track - Track object from manifest.
    */
   loadAndPlay(track) {
+    // History is now managed by playNext(), not here
+
     // Determine supported format
     const canPlayOgg = this.audio.canPlayType('audio/ogg; codecs="vorbis"');
     const ext = canPlayOgg ? 'ogg' : 'm4a';
 
-    this.audio.src = `assets/music/${ext}/${track.filename}.${ext}`;
+    this.audio.src = `assets/music/${ext}/${encodeURIComponent(track.filename)}.${ext}`;
     this.audio.volume = config.music.volume;
+
+    // Set track name immediately (before play attempt)
+    config.music.currentTrackName = track.title.replace(/ \[(Lyrics|Instrumental)\]/g, '');
+    console.log(`Now playing: ${track.title}`);
+
     this.audio
       .play()
       .then(() => {
         this.isPlaying = true;
-        console.log(`Now playing: ${track.title}`);
       })
       .catch((error) => {
-        console.error('Playback failed:', error);
+        console.warn('Playback failed (likely autoplay blocked):', error);
         this.isPlaying = false;
-        // Try next one if this fails?
-        // setTimeout(() => this.playNext(), 1000);
+        // Note: Track name stays set even if autoplay is blocked
+        // User can click play button to start manually
       });
   }
 

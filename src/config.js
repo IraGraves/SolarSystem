@@ -70,5 +70,7 @@ export const config = {
     enabled: false,
     volume: 0.5,
     playlist: [], // Array of track IDs to play
+    currentTrackName: 'None', // Display string for UI
+    shuffle: false,
   },
 };

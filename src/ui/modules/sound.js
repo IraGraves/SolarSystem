@@ -28,6 +28,106 @@ export function setupSoundUI(gui) {
     volCtrl.domElement.classList.add('full-width');
   }
 
+  // Currently Playing Display
+  const currentTrackCtrl = soundFolder
+    .add(config.music, 'currentTrackName')
+    .name('Currently Playing')
+    .listen() // Listen for changes in config
+    .disable(); // Make it read-only
+
+  if (currentTrackCtrl) {
+    currentTrackCtrl.domElement.classList.add('full-width');
+    // Optional: Add a specific class if we want to style the text differently
+    // currentTrackCtrl.domElement.classList.add('track-display');
+  }
+
+  // Playback Controls (Previous, Play/Pause, Next, Shuffle)
+  const controlsContainer = document.createElement('div');
+  controlsContainer.className = 'control-buttons';
+  controlsContainer.style.marginTop = '4px'; // Add a little spacing
+
+  // Previous button
+  const prevBtn = document.createElement('div');
+  prevBtn.className = 'control-btn';
+  prevBtn.textContent = '⏮'; // Previous
+  prevBtn.title = 'Previous Track';
+  prevBtn.onclick = () => {
+    musicSystem.playPrevious();
+  };
+
+  // Play/Pause toggle button
+  const playPauseBtn = document.createElement('div');
+  playPauseBtn.className = 'control-btn';
+  // Initialize based on volume (if volume > 0, music will auto-start)
+  const initiallyPlaying = config.music.volume > 0;
+  playPauseBtn.textContent = initiallyPlaying ? '⏸' : '▶'; // Dynamic icon
+  playPauseBtn.title = initiallyPlaying ? 'Pause' : 'Play';
+  playPauseBtn.onclick = () => {
+    const newState = !config.music.enabled;
+    musicSystem.setEnabled(newState);
+    // Update button icon and title
+    playPauseBtn.textContent = newState ? '⏸' : '▶';
+    playPauseBtn.title = newState ? 'Pause' : 'Play';
+  };
+
+  // Next button
+  const nextBtn = document.createElement('div');
+  nextBtn.className = 'control-btn';
+  nextBtn.textContent = '⏭'; // Next
+  nextBtn.title = 'Next Track';
+  nextBtn.onclick = () => {
+    musicSystem.playNext();
+  };
+
+  // Shuffle button with enhanced visual state
+  const shuffleBtn = document.createElement('div');
+  shuffleBtn.className = 'control-btn';
+  shuffleBtn.textContent = config.music.shuffle ? '🔀' : '🔀'; // Same icon, but styled differently
+  shuffleBtn.title = config.music.shuffle ? 'Shuffle: ON' : 'Shuffle: OFF';
+  if (config.music.shuffle) {
+    shuffleBtn.classList.add('active');
+  } else {
+    shuffleBtn.style.opacity = '0.4'; // Make it visually "off"
+  }
+  shuffleBtn.onclick = () => {
+    config.music.shuffle = !config.music.shuffle;
+    if (config.music.shuffle) {
+      shuffleBtn.classList.add('active');
+      shuffleBtn.style.opacity = '1';
+      shuffleBtn.title = 'Shuffle: ON';
+    } else {
+      shuffleBtn.classList.remove('active');
+      shuffleBtn.style.opacity = '0.4';
+      shuffleBtn.title = 'Shuffle: OFF';
+    }
+  };
+
+  controlsContainer.appendChild(prevBtn);
+  controlsContainer.appendChild(playPauseBtn);
+  controlsContainer.appendChild(nextBtn);
+  controlsContainer.appendChild(shuffleBtn);
+
+  // Add to GUI
+  // lil-gui doesn't have a direct "add DOM element" method, so we append to the folder's DOM
+  // But we want it *inside* the list.
+  // The standard way is to add a dummy controller and replace its DOM, or append to the container.
+  // Let's try appending to the folder's widget list container.
+  // soundFolder.domElement.querySelector('ul').appendChild(controlsContainer);
+  // Actually, let's use a dummy object to create a slot, then replace it.
+  const dummyObj = { controls: '' };
+  const dummyCtrl = soundFolder.add(dummyObj, 'controls').name(' ');
+  dummyCtrl.domElement.classList.add('full-width');
+  // Replace the widget content
+  const widget = dummyCtrl.domElement.querySelector('.widget');
+  widget.innerHTML = '';
+  widget.appendChild(controlsContainer);
+  // Hide the name label to give full width to buttons?
+  // .full-width hides the display, but we want to hide the label too or use it?
+  // If we use .name(' '), it takes up space.
+  // Let's try to make the controller container just hold our buttons.
+  dummyCtrl.domElement.style.gridTemplateColumns = '1fr';
+  dummyCtrl.domElement.querySelector('.name').style.display = 'none';
+
   // Playlist Button (Modal Trigger)
   const playlistControl = {
     editPlaylist: () => {
