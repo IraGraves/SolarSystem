@@ -567,3 +567,22 @@ export function updateOrbitColors(orbitGroup, relativeOrbitGroup, planets) {
     }
   });
 }
+
+/**
+ * Updates the scale of the Sun's magnetic field meshes.
+ * @param {THREE.Group} universeGroup - The universe group containing the sun fields
+ * @param {number} scale - The new scale factor
+ */
+export function updateSunMagneticFieldScale(universeGroup, scale) {
+  if (!universeGroup) return;
+
+  const basicField = universeGroup.children.find((c) => c.name === 'SunMagneticFieldBasic');
+  if (basicField) {
+    basicField.scale.setScalar(scale);
+  }
+
+  const solarWindField = universeGroup.children.find((c) => c.name === 'MagneticField');
+  if (solarWindField) {
+    solarWindField.scale.setScalar(scale);
+  }
+}

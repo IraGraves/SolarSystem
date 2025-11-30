@@ -82,7 +82,7 @@ export function setupGUI(
   );
 
   // --- SCALE SECTION ---
-  const scaleCtrl = setupScaleFolder(gui, uiState, planets, sun);
+  const scaleCtrl = setupScaleFolder(gui, uiState, planets, sun, universeGroup);
 
   // --- VISUAL SECTION ---
   setupVisualFolder(

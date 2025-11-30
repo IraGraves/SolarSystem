@@ -1,8 +1,8 @@
 import { config, REAL_PLANET_SCALE_FACTOR, REAL_SUN_SCALE_FACTOR } from '../../config.js';
 import { addValueDisplay } from './utils.js';
-import { updateMagneticFieldScales } from './visual.js';
+import { updateMagneticFieldScales, updateSunMagneticFieldScale } from './visual.js';
 
-export function setupScaleFolder(gui, uiState, planets, sun) {
+export function setupScaleFolder(gui, uiState, planets, sun, universeGroup) {
   const scaleFolder = gui.addFolder('Scale');
 
   // Flag to prevent switching to Custom when preset is being applied
@@ -29,6 +29,7 @@ export function setupScaleFolder(gui, uiState, planets, sun) {
       const internalVal = val / REAL_SUN_SCALE_FACTOR;
       config.sunScale = internalVal;
       sun.scale.setScalar(internalVal);
+      updateSunMagneticFieldScale(universeGroup, internalVal);
 
       // Switch to Custom if user manually adjusts
       if (!isPresetChanging && uiState.scalePreset !== 'Custom') {
@@ -96,6 +97,7 @@ export function setupScaleFolder(gui, uiState, planets, sun) {
 
   // Initial update to apply defaults
   updateMagneticFieldScales(planets);
+  updateSunMagneticFieldScale(universeGroup, config.sunScale);
 
   return {
     setScalePreset: (preset) => {
