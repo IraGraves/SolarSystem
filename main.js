@@ -254,10 +254,10 @@ import { setupGUI, updateUI } from './src/ui/gui.js';
             // Pass time to shader
             sunFieldBasic.userData.shaderUniforms.uTime.value = hoursSinceJ2000;
 
-            // Sync rotation with Sun - REMOVED: Now attached to Sun directly
-            // if (sun) {
-            //   sunFieldBasic.rotation.copy(sun.rotation);
-            // }
+            // Sync rotation with Sun
+            if (sun) {
+              sunFieldBasic.rotation.y = sun.rotation.y;
+            }
           }
 
           // Animate polar lines (still CPU-based for now as they are lines, not tubes)
