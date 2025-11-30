@@ -36,15 +36,9 @@ export class MusicSystem {
         config.music.playlist = this.tracks.map((t) => t.id);
       }
 
-      // If volume is > 0, ensure enabled is true so it starts playing
-      if (config.music.volume > 0) {
-        config.music.enabled = true;
-      }
-
-      // If config.music.enabled is true on startup, we might want to start playing.
-      if (config.music.enabled && config.music.playlist.length > 0) {
-        this.playNext();
-      }
+      // Don't auto-start music on page load to avoid blocking with large file downloads
+      // Music will start when user explicitly enables it via UI
+      console.log('Music ready. Click play button to start.');
     } catch (error) {
       console.error('Failed to initialize music system:', error);
     }
