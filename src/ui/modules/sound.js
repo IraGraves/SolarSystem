@@ -102,10 +102,31 @@ export function setupSoundUI(gui) {
     }
   };
 
+  // Edit Playlist Button
+  const playlistBtn = document.createElement('div');
+  playlistBtn.className = 'control-btn';
+  playlistBtn.textContent = 'Edit Playlist...';
+  playlistBtn.title = 'Open Playlist';
+  playlistBtn.style.maxWidth = 'none'; // Allow it to be wider
+  playlistBtn.style.flex = '3'; // Take up more space
+  playlistBtn.style.fontSize = '0.75em'; // Slightly smaller text to fit
+  playlistBtn.style.whiteSpace = 'nowrap'; // Prevent wrapping
+  playlistBtn.style.padding = '0 4px'; // Reduce padding
+  playlistBtn.onclick = () => {
+    openPlaylistModal();
+  };
+
+  // Reduce width of icon buttons to make room
+  [prevBtn, playPauseBtn, nextBtn, shuffleBtn].forEach((btn) => {
+    btn.style.maxWidth = '32px';
+    btn.style.flex = '0 0 32px'; // Fixed width
+  });
+
   controlsContainer.appendChild(prevBtn);
   controlsContainer.appendChild(playPauseBtn);
   controlsContainer.appendChild(nextBtn);
   controlsContainer.appendChild(shuffleBtn);
+  controlsContainer.appendChild(playlistBtn);
 
   // Add to GUI
   // lil-gui doesn't have a direct "add DOM element" method, so we append to the folder's DOM
@@ -127,14 +148,6 @@ export function setupSoundUI(gui) {
   // Let's try to make the controller container just hold our buttons.
   dummyCtrl.domElement.style.gridTemplateColumns = '1fr';
   dummyCtrl.domElement.querySelector('.name').style.display = 'none';
-
-  // Playlist Button (Modal Trigger)
-  const playlistControl = {
-    editPlaylist: () => {
-      openPlaylistModal();
-    },
-  };
-  soundFolder.add(playlistControl, 'editPlaylist').name('Edit Playlist...');
 
   soundFolder.close(); // Close folder by default
 }
