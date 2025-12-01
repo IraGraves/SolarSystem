@@ -1,6 +1,7 @@
 import * as Astronomy from 'astronomy-engine';
 import * as THREE from 'three';
 import { AU_TO_SCENE, config, REAL_PLANET_SCALE_FACTOR } from '../config.js';
+import { textureManager } from '../managers/TextureManager.js';
 
 /**
  * Get approximate orbital distance for a planet in AU
@@ -18,28 +19,15 @@ function getPlanetDistanceAU(planetData) {
 /**
  * Creates a moon mesh with texture support
  * @param {Object} moonData - Moon data object
- * @param {THREE.TextureLoader} textureLoader - Shared texture loader
  * @returns {THREE.Mesh} Moon mesh
  */
-function createMoonMesh(moonData, textureLoader) {
+function createMoonMesh(moonData) {
   const moonGeo = new THREE.SphereGeometry(moonData.radius, 32, 32);
   // Start with base color
   const moonMat = new THREE.MeshStandardMaterial({ color: moonData.color });
 
   if (moonData.texture) {
-    textureLoader.load(
-      moonData.texture,
-      (texture) => {
-        moonMat.map = texture;
-        moonMat.color.setHex(0xffffff); // Reset to white so texture colors show
-        moonMat.needsUpdate = true;
-      },
-      undefined,
-      (err) => {
-        console.error(`Error loading texture for moon ${moonData.name}:`, err);
-        // Keep base color on error
-      }
-    );
+    textureManager.loadTexture(moonData.texture, moonMat, moonData.name, true, moonData.category);
   }
 
   const moonMesh = new THREE.Mesh(moonGeo, moonMat);
@@ -207,16 +195,15 @@ function createRealOrbitLine(moonData, orbitLinesGroup) {
  * @param {Object} planetData - Data object for the parent planet
  * @param {THREE.Group} planetGroup - The parent planet's group
  * @param {THREE.Group} orbitLinesGroup - Group for moon orbit lines
- * @param {THREE.TextureLoader} textureLoader - Shared texture loader
  * @returns {Array} Array of created moon objects
  */
-export function createMoons(planetData, planetGroup, orbitLinesGroup, textureLoader) {
+export function createMoons(planetData, planetGroup, orbitLinesGroup) {
   const moons = [];
   if (!planetData.moons) return moons;
 
   planetData.moons.forEach((moonData) => {
     // Create moon mesh (common for all types)
-    const moonMesh = createMoonMesh(moonData, textureLoader);
+    const moonMesh = createMoonMesh(moonData);
     addAxisLine(moonMesh, moonData);
 
     // Add to planet group (all moons)
@@ -244,7 +231,7 @@ export function createMoons(planetData, planetGroup, orbitLinesGroup, textureLoa
     if (moonData.category === 'largest' && config.showLargestMoons) isVisible = true;
     else if (moonData.category === 'major' && config.showMajorMoons) isVisible = true;
     else if (moonData.category === 'small' && config.showSmallMoons) isVisible = true;
-    
+
     // Fallback: if no category, default to visible (or hidden? let's say visible to be safe)
     if (!moonData.category) isVisible = true;
 

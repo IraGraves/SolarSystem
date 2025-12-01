@@ -1,12 +1,12 @@
 import * as THREE from 'three';
+import { textureManager } from '../managers/TextureManager.js';
 
 /**
  * Creates a ring mesh for a planet
  * @param {Object} data - Planet data object containing ring specifications
  * @param {THREE.Mesh} mesh - The planet mesh to attach the ring to
- * @param {THREE.TextureLoader} textureLoader - Shared texture loader
  */
-export function createRing(data, mesh, textureLoader) {
+export function createRing(data, mesh) {
   if (!data.ring) return;
 
   const ringGeo = new THREE.RingGeometry(data.ring.inner, data.ring.outer, 128); // Increased segments for smoothness
@@ -36,13 +36,12 @@ export function createRing(data, mesh, textureLoader) {
       metalness: 0.2,
     });
   } else if (data.ring.texture) {
-    const ringTexture = textureLoader.load(data.ring.texture);
     ringMat = new THREE.MeshStandardMaterial({
-      map: ringTexture,
       side: THREE.DoubleSide,
       transparent: true,
       opacity: 1.0,
     });
+    textureManager.loadTexture(data.ring.texture, ringMat, data.name);
   } else {
     ringMat = new THREE.MeshStandardMaterial({
       color: data.ring.color,

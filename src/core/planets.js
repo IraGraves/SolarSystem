@@ -6,6 +6,7 @@ import { calculateKeplerianPosition } from '../physics/orbits.js';
 import { createMoons, updateMoonPositions } from '../systems/moons.js';
 import { createOrbitLine } from '../systems/orbits.js';
 import { createRing } from '../systems/rings.js';
+import { textureManager } from '../managers/TextureManager.js';
 
 // --- Planet Creation Helper Functions ---
 
@@ -21,7 +22,7 @@ import { createRing } from '../systems/rings.js';
  * @param {THREE.TextureLoader} textureLoader - Shared texture loader
  * @returns {THREE.Mesh} Sun mesh
  */
-function createSun(scene, textureLoader) {
+function createSun(scene) {
   const sunGeometry = new THREE.SphereGeometry(5, 64, 64);
 
   // Create a dummy texture to ensure USE_MAP is defined from the start
@@ -109,12 +110,11 @@ function createSun(scene, textureLoader) {
     );
   };
 
-  textureLoader.load(`${import.meta.env.BASE_URL}assets/textures/sun.jpg`, (texture) => {
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
-    sunMaterial.map = texture;
-    sunMaterial.needsUpdate = true;
-  });
+  textureManager.loadTexture(
+    `${import.meta.env.BASE_URL}assets/textures/sun.jpg`,
+    sunMaterial,
+    'Sun'
+  );
 
   const sun = new THREE.Mesh(sunGeometry, sunMaterial);
   scene.add(sun);
@@ -151,10 +151,8 @@ function createSun(scene, textureLoader) {
 export function createPlanets(scene, orbitGroup) {
   const planets = [];
   const dwarfPlanets = []; // Separate array for toggling
-  const textureLoader = new THREE.TextureLoader();
-
   // Create Sun
-  const sun = createSun(scene, textureLoader);
+  const sun = createSun(scene);
 
   // Combine data for creation loop
   const allBodies = [...planetData, ...dwarfPlanetData];
@@ -168,19 +166,7 @@ export function createPlanets(scene, orbitGroup) {
     const material = new THREE.MeshStandardMaterial({ color: data.color });
 
     if (data.texture) {
-      textureLoader.load(
-        data.texture,
-        (texture) => {
-          material.map = texture;
-          material.color.setHex(0xffffff); // Reset to white so texture colors show
-          material.needsUpdate = true;
-        },
-        undefined,
-        (err) => {
-          console.error(`Error loading texture for ${data.name}:`, err);
-          // Keep base color on error
-        }
-      );
+      textureManager.loadTexture(data.texture, material, data.name);
     }
     const mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
@@ -235,19 +221,7 @@ export function createPlanets(scene, orbitGroup) {
         cloudMesh.visible = false; // Hide until loaded
         cloudMesh.layers.set(1); // Clouds also need shadows
 
-        textureLoader.load(
-          data.cloudTexture,
-          (texture) => {
-            cloudMaterial.map = texture;
-            cloudMaterial.alphaMap = texture;
-            cloudMaterial.needsUpdate = true;
-            cloudMesh.visible = true;
-          },
-          undefined,
-          (err) => {
-            console.error(`Error loading cloud texture for ${data.name}:`, err);
-          }
-        );
+        textureManager.loadTexture(data.cloudTexture, cloudMaterial, 'Earth Clouds');
 
         mesh.add(cloudMesh);
 
@@ -261,13 +235,13 @@ export function createPlanets(scene, orbitGroup) {
     planetGroup.add(orbitLinesGroup);
 
     // Create Rings
-    createRing(data, mesh, textureLoader);
+    createRing(data, mesh);
 
     // Create Orbit Line
     const orbitLine = createOrbitLine(data, orbitGroup);
 
     // Create Moons
-    const moons = createMoons(data, planetGroup, orbitLinesGroup, textureLoader);
+    const moons = createMoons(data, planetGroup, orbitLinesGroup);
 
     const planetObj = {
       group: planetGroup,
@@ -340,12 +314,12 @@ export function updatePlanets(planets, sun = null, shadowLight = null) {
       // For SpotLight, we adjust the angle (FOV) to cover Earth + Moon
       const currentRadius = p.data.radius * config.planetScale;
       const distToSun = p.mesh.position.length();
-      
+
       // Calculate required angle: tan(theta) = radius / distance
       // We use 4x radius to cover Moon's orbit
       const requiredRadius = currentRadius * 4;
       const angle = Math.atan(requiredRadius / distToSun);
-      
+
       shadowLight.angle = angle * 1.2; // Add 20% margin
       shadowLight.shadow.camera.updateProjectionMatrix();
     }
