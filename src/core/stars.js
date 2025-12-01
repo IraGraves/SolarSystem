@@ -58,14 +58,15 @@ function getSpectralType(r, g, b) {
 
 export async function createStarfield(scene) {
   try {
-    // Start fetching names in background
-    const namesPromise = fetch(`${import.meta.env.BASE_URL}assets/stars_names.json`).then((res) =>
-      res.json()
-    );
+    const [metaRes, binRes] = await Promise.all([
+      fetch(`${import.meta.env.BASE_URL}assets/stars_meta.json`),
+      fetch(`${import.meta.env.BASE_URL}assets/stars_data.bin`),
+    ]);
 
-    // Await only the 3D data (critical for visualization)
-    const starsResponse = await fetch(`${import.meta.env.BASE_URL}assets/stars_3d.json`);
-    const starsData = await starsResponse.json();
+    const metaData = await metaRes.json();
+    const arrayBuffer = await binRes.arrayBuffer();
+    const dataView = new Float64Array(arrayBuffer);
+    const STRIDE = 8; // 8 numbers per star
 
     const geometry = new THREE.BufferGeometry();
     const positions = [];
@@ -73,54 +74,55 @@ export async function createStarfield(scene) {
     const sizes = [];
     const processedData = [];
 
-    starsData.forEach((star) => {
-      // Skip stars with missing coordinate data
-      if (star.x == null || star.y == null || star.z == null || star.p == null) {
-        return;
-      }
+    for (let i = 0; i < metaData.length; i++) {
+      const offset = i * STRIDE;
+
+      // Metadata: [id, name, bayer, flam, hip, hd]
+      const [id, name, bayer, flam, hip, hd] = metaData[i];
+
+      // Physics (Full Precision)
+      const xRaw = dataView[offset + 0];
+      const yRaw = dataView[offset + 1];
+      const zRaw = dataView[offset + 2];
+      const p = dataView[offset + 3];
+      const nVal = dataView[offset + 4];
+      const r = dataView[offset + 5];
+      const g = dataView[offset + 6];
+      const b = dataView[offset + 7];
 
       const SCALE = 10000;
-      const x = star.z * SCALE; // Vernal Equinox
-      const y = star.x * SCALE; // North Pole
-      const z = star.y * SCALE; // -East
+      const x = zRaw * SCALE; // Vernal Equinox
+      const y = xRaw * SCALE; // North Pole
+      const z = yRaw * SCALE; // -East
 
       positions.push(x, y, z);
-
-      // Color from K (r,g,b 0-1)
-      let r = 1,
-        g = 1,
-        b = 1;
-      if (star.K) {
-        const maxVal = Math.max(star.K.r, star.K.g, star.K.b, 0.001);
-        r = star.K.r / maxVal;
-        g = star.K.g / maxVal;
-        b = star.K.b / maxVal;
-        colors.push(r, g, b);
-      } else {
-        colors.push(1, 1, 1); // Default to white
-      }
+      colors.push(r, g, b);
 
       // Size calculation
-      const dist = Math.max(star.p || 1.0, 0.1);
-      const luminosity = star.N || 0;
+      const dist = Math.max(p || 1.0, 0.1);
+      const luminosity = nVal || 0;
       const flux = luminosity / (dist * dist);
       const logFlux = Math.log(Math.max(flux, 1e-9));
       const size = Math.max(1.5, 1.5 + (logFlux + 8.0) * 0.6);
       sizes.push(size);
 
-      // Initial Name (ID or HD number)
-      const commonName = star.n;
-
       processedData.push({
-        id: star.i,
-        name: commonName,
-        distance: star.p,
-        radius: star.N,
+        id: id,
+        name: name,
+        bayer: bayer,
+        flamsteed: flam,
+        hip: hip,
+        hd: hd,
+        distance: p,
+        radius: nVal,
+        x: xRaw,
+        y: yRaw,
+        z: zRaw,
         colorIndex: 'N/A',
         mag: 'N/A',
         spectralType: getSpectralType(r, g, b),
       });
-    });
+    }
 
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
@@ -153,30 +155,7 @@ export async function createStarfield(scene) {
     stars.renderOrder = -1; // Ensure stars are rendered before everything else (background)
     scene.add(stars);
 
-    // Handle names loading in background
-    namesPromise
-      .then((namesData) => {
-        console.log('Star names loaded. Updating...');
-        const nameMap = {};
-        namesData.forEach((item) => {
-          nameMap[item.i] = item.n;
-        });
-
-        // Update processedData in place
-        stars.userData.starData.forEach((star) => {
-          const names = nameMap[star.id];
-          if (names && Array.isArray(names)) {
-            const nameObj = names.find((n) => n.startsWith('NAME '));
-            if (nameObj) {
-              star.name = nameObj.replace('NAME ', '');
-            }
-          }
-        });
-        console.log('Star names updated.');
-      })
-      .catch((err) => console.error('Error loading star names:', err));
-
-    return { stars, rawData: starsData };
+    return { stars, rawData: processedData };
   } catch (error) {
     console.error('Error loading stars:', error);
     return null;
@@ -193,9 +172,14 @@ export async function createConstellations(zodiacGroup, constellationsGroup, sta
     const SCALE = 10000;
     const starPositionMap = {};
     starsData.forEach((star) => {
-      if (star.x != null && star.y != null && star.z != null && star.i != null) {
+      if (star.x != null && star.y != null && star.z != null && star.id != null) {
         // Apply correct coordinate transformation: (z, x, y)
-        starPositionMap[star.i] = new THREE.Vector3(star.z * SCALE, star.x * SCALE, star.y * SCALE);
+        // Note: star.x/y/z here are the RAW coordinates we stored in processedData
+        starPositionMap[star.id] = new THREE.Vector3(
+          star.z * SCALE,
+          star.x * SCALE,
+          star.y * SCALE
+        );
       }
     });
 
