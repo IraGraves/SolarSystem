@@ -74,7 +74,6 @@ export function setupTooltipSystem(
       const objectData = getObjectData(hit.object, planets, sun);
       if (objectData) {
         closestObject = objectData;
-        closestDistance = 0; // Priority over everything
       }
     }
 
