@@ -1,7 +1,7 @@
 import * as Astronomy from 'astronomy-engine';
 import * as THREE from 'three';
-import { config } from './src/config.js';
-import { Logger } from './src/utils/logger.js';
+import { config } from '../config.js';
+import { Logger } from '../utils/logger.js';
 
 const SCREEN_HIT_RADIUS = 10; // Pixels on screen for hit detection
 

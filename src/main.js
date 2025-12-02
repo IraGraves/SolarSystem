@@ -15,27 +15,27 @@
  */
 
 import * as THREE from 'three';
-import { SimulationControl } from './src/api/SimulationControl.js';
-import { Logger } from './src/utils/logger.js';
-import { setupTooltipSystem } from './interactions.js';
-import { config } from './src/config.js';
-import { createPlanets, updatePlanets } from './src/core/planets.js';
-import { createScene } from './src/core/scene.js';
-import { createConstellations, createStarfield } from './src/core/stars.js';
-import { setupFocusMode, updateFocusMode } from './src/features/focusMode.js';
-import { initializeMissions, updateMissions } from './src/features/missions.js';
-import { createHabitableZone } from './src/systems/habitableZone.js';
+import { SimulationControl } from './api/SimulationControl.js';
+import { Logger } from './utils/logger.js';
+import { setupTooltipSystem } from './systems/tooltips.js';
+import { config } from './config.js';
+import { createPlanets, updatePlanets } from './core/planets.js';
+import { createScene } from './core/scene.js';
+import { createConstellations, createStarfield } from './core/stars.js';
+import { setupFocusMode, updateFocusMode } from './features/focusMode.js';
+import { initializeMissions, updateMissions } from './features/missions.js';
+import { createHabitableZone } from './systems/habitableZone.js';
 import {
   createMagneticField,
   createSunMagneticField,
   createSunMagneticFieldBasic,
-} from './src/systems/magneticFields.js';
-import { updateRelativeOrbits } from './src/systems/relativeOrbits.js';
-import { createRabbit } from './src/systems/rabbit.js';
-import { alignZodiacSigns, createZodiacSigns } from './src/systems/zodiacSigns.js';
-import { updateCoordinateSystem } from './src/systems/coordinates.js';
-import { setupGUI, updateUI } from './src/ui/gui.js';
-import { musicSystem } from './src/systems/music.js';
+} from './systems/magneticFields.js';
+import { updateRelativeOrbits } from './systems/relativeOrbits.js';
+import { createRabbit } from './systems/rabbit.js';
+import { alignZodiacSigns, createZodiacSigns } from './systems/zodiacSigns.js';
+import { updateCoordinateSystem } from './systems/coordinates.js';
+import { setupGUI, updateUI } from './ui/gui.js';
+import { musicSystem } from './systems/music.js';
 
 // --- Init ---
 (async () => {
