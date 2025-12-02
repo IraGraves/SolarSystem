@@ -12,6 +12,33 @@ class TextureManager {
 
     // Registry to store texture info for on-demand loading
     this.registry = {};
+
+    // Manifest for texture existence check
+    this.manifest = null;
+    this.manifestLoading = false;
+    this.loadManifest();
+  }
+
+  async loadManifest() {
+    if (this.manifestLoading) return;
+    this.manifestLoading = true;
+
+    try {
+      const response = await fetch('assets/textures.json');
+      if (!response.ok) throw new Error('Manifest not found');
+      const files = await response.json();
+      this.manifest = new Set(files);
+      console.log(`TextureManager: Loaded manifest with ${this.manifest.size} files`);
+    } catch (err) {
+      console.warn(
+        'TextureManager: Failed to load texture manifest, falling back to trial-and-error',
+        err
+      );
+      this.manifest = null; // Null means "don't filter"
+    } finally {
+      this.manifestLoading = false;
+      this.processQueue();
+    }
   }
 
   /**
@@ -101,6 +128,7 @@ class TextureManager {
   }
 
   processQueue() {
+    if (this.manifestLoading) return; // Wait for manifest
     if (this.activeRequests >= this.maxConcurrent || this.queue.length === 0) return;
 
     const item = this.queue.shift();
@@ -133,17 +161,39 @@ class TextureManager {
   }
 
   tryLoadTexture(paths, item) {
-    if (paths.length === 0) {
-      console.warn(
-        `TextureManager: All candidates failed for ${item.originalPath} (Stage ${item.stage})`
-      );
-      // All attempts failed
+    // Filter paths using manifest if available
+    let validPaths = paths;
+    if (this.manifest) {
+      validPaths = paths.filter((p) => {
+        // TextureManager paths are like "assets/textures/lowres/earth.webp"
+        // Manifest paths are also relative to public, e.g. "assets/textures/lowres/earth.webp"
+        // We need to ensure format matches.
+        // Remove leading slash if present for comparison
+        const normalizedPath = p.startsWith('/') ? p.slice(1) : p;
+        return this.manifest.has(normalizedPath);
+      });
+
+      if (validPaths.length === 0 && paths.length > 0) {
+        console.log(
+          `TextureManager: Skipped ${item.originalPath} (Stage ${item.stage}) - No valid files in manifest`
+        );
+        // If all filtered out, treat as failure for this stage
+        // But we shouldn't just drop it if it's the only stage?
+        // If validPaths is empty, tryLoadTexture will handle it below (paths.length === 0 check)
+      }
+    }
+
+    if (validPaths.length === 0) {
+      // console.warn(
+      //   `TextureManager: All candidates failed for ${item.originalPath} (Stage ${item.stage})`
+      // );
+      // All attempts failed (or filtered out)
       this.activeRequests--;
       this.processQueue();
       return;
     }
 
-    const currentPath = paths.shift();
+    const currentPath = validPaths.shift();
 
     this.textureLoader.load(
       currentPath,
