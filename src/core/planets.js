@@ -1,6 +1,6 @@
 import * as Astronomy from 'astronomy-engine';
 import * as THREE from 'three';
-import { AU_TO_SCENE, config, REAL_PLANET_SCALE_FACTOR } from '../config.js';
+import { AU_TO_SCENE, config } from '../config.js';
 import { dwarfPlanetData, planetData } from '../data/bodies.js';
 import { calculateKeplerianPosition } from '../physics/orbits.js';
 import { createMoons, updateMoonPositions } from '../systems/moons.js';
@@ -171,7 +171,6 @@ export function createPlanets(scene, orbitGroup) {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    console.log(`Creating planet: ${data.name}`); // Debug log
     planetGroup.add(mesh); // Mesh is added to planetGroup
 
     // Apply initial scale

@@ -528,12 +528,6 @@ export function setupObjectsFolder(gui, planets, sun) {
 export function updateOrbitColors(orbitGroup, relativeOrbitGroup, planets) {
   const showColors = config.showPlanetColors;
   const showDwarfColors = config.showDwarfPlanetColors;
-  console.log(
-    'updateOrbitColors called. showColors:',
-    showColors,
-    'showDwarfColors:',
-    showDwarfColors
-  );
 
   // 1. Update Standard Orbits (Heliocentric / Tychonic)
   orbitGroup.children.forEach((line) => {

@@ -50,7 +50,6 @@ import { musicSystem } from './src/systems/music.js';
     window.scene = scene; // Expose for debugging
 
     // Create Universe Group (Root for all celestial objects)
-    // Create Universe Group (Root for all celestial objects)
     const universeGroup = new THREE.Group();
     scene.add(universeGroup);
 
@@ -227,7 +226,7 @@ import { musicSystem } from './src/systems/music.js';
         // But for now, let's just iterate universeGroup.children to find it safely.
         const sunField = universeGroup.children.find((c) => c.name === 'MagneticField');
 
-        if (sunField && sunField.visible && sunField.userData.material) {
+        if (sunField?.visible && sunField.userData.material) {
           // Use our accumulated simulation time
           sunField.userData.material.uniforms.uTime.value = magneticFieldTime;
 
@@ -242,7 +241,7 @@ import { musicSystem } from './src/systems/music.js';
           (c) => c.name === 'SunMagneticFieldBasic'
         );
 
-        if (sunFieldBasic && sunFieldBasic.visible) {
+        if (sunFieldBasic?.visible) {
           const time = magneticFieldTime + sunFieldBasic.userData.timeOffset;
 
           // Update shader uniform for time (Differential Rotation + Wobble)

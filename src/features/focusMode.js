@@ -136,7 +136,7 @@ export function focusOnObject(
   enableHighRes(focusedObject);
 
   // Trigger high-resolution texture load
-  if (targetObject.data && targetObject.data.name) {
+  if (targetObject.data?.name) {
     textureManager.loadHighRes(targetObject.data.name);
   }
 

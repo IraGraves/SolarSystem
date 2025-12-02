@@ -107,7 +107,7 @@ class TextureManager {
     this.activeRequests++;
 
     // Determine candidate paths
-    let candidatePaths = [];
+    const candidatePaths = [];
 
     if (item.stage === 0) {
       // Lowres: Try .webp first, then original extension

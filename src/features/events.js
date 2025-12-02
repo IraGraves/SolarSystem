@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { AU_TO_SCENE, config } from '../config.js';
+import { config } from '../config.js';
 import { focusOnObject } from './focusMode.js';
 
 /**

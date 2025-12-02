@@ -1,6 +1,6 @@
 import * as Astronomy from 'astronomy-engine';
 import * as THREE from 'three';
-import { AU_TO_SCENE, config } from './src/config.js';
+import { config } from './src/config.js';
 
 const SCREEN_HIT_RADIUS = 10; // Pixels on screen for hit detection
 
@@ -51,14 +51,15 @@ export function setupTooltipSystem(
     // Tooltip positioning is now handled after content update to ensure it stays on screen
 
     let closestObject = null;
-    let closestDistance = Infinity;
 
     // 1. Check Planets, Sun, and Moons using Raycaster (3D)
     const interactableObjects = [sun];
     planets.forEach((p) => {
       interactableObjects.push(p.mesh);
       if (p.moons) {
-        p.moons.forEach((m) => interactableObjects.push(m.mesh));
+        for (const m of p.moons) {
+          interactableObjects.push(m.mesh);
+        }
       }
     });
 
@@ -66,13 +67,6 @@ export function setupTooltipSystem(
 
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(interactableObjects, true);
-
-    // Debug logging (throttle to avoid spam)
-    if (Math.random() < 0.01) {
-      // console.log('Interactable objects:', interactableObjects.length);
-      // console.log('Intersects:', intersects.length);
-      // if (intersects.length > 0) console.log('Hit:', intersects[0].object);
-    }
 
     if (intersects.length > 0) {
       // Found a 3D object (Planet/Sun/Moon)
@@ -167,9 +161,8 @@ export function setupTooltipSystem(
     // 3. Check Constellations (Screen Space) - Only if no planet or star hit
     if (!closestObject) {
       const groupsToCheck = [];
-      if (zodiacGroup && zodiacGroup.visible) groupsToCheck.push(zodiacGroup);
-      if (constellationsGroup && constellationsGroup.visible)
-        groupsToCheck.push(constellationsGroup);
+      if (zodiacGroup?.visible) groupsToCheck.push(zodiacGroup);
+      if (constellationsGroup?.visible) groupsToCheck.push(constellationsGroup);
 
       let minLineDist = SCREEN_HIT_RADIUS; // Use same radius
 
