@@ -89,8 +89,8 @@ export function setupTooltipSystem(
     if (!closestObject) {
       const stars = starsRef.value;
       if (stars) {
-        const positions = stars.geometry.attributes.position.array;
         const starData = stars.userData.starData;
+        const octree = stars.userData.octree;
 
         // Optimization: Only check stars if we are not hovering a planet
         // We iterate through all stars - this can be optimized with a spatial index if needed
@@ -100,12 +100,44 @@ export function setupTooltipSystem(
         const STAR_HIT_RADIUS = 15; // Reduced radius to avoid sticky feeling
         let minScreenDist = STAR_HIT_RADIUS;
 
-        for (let i = 0; i < starData.length; i++) {
-          const x = positions[i * 3];
-          const y = positions[i * 3 + 1];
-          const z = positions[i * 3 + 2];
+        // Use Octree if available
+        let candidates = [];
+        if (octree) {
+          raycaster.setFromCamera(mouse, camera);
 
-          const starPos = new THREE.Vector3(x, y, z);
+          // Transform ray to local space of the stars object
+          // The Octree is built in local space, but raycaster is in world space
+          const inverseMatrix = new THREE.Matrix4().copy(stars.matrixWorld).invert();
+          const localRay = raycaster.ray.clone().applyMatrix4(inverseMatrix);
+
+          // Use a threshold of 500 to account for perspective "cone" of 15px at distance 10000
+          candidates = octree.queryRay(localRay, 500);
+        } else {
+          // Fallback to all stars if octree not ready
+          candidates = starData.map((d, i) => ({ data: d, index: i }));
+        }
+
+        for (const candidate of candidates) {
+          // If candidate comes from Octree, it has { position, data, index }
+          // If fallback, we constructed it similarly (but position is not pre-calculated in fallback object above, so we'd need to handle that if we cared about fallback perf, but we don't)
+
+          // Actually, let's just use the data we have.
+          // Octree stores { position: Vector3, data: starData, index: int }
+
+          const star = candidate.data;
+          // We need position. If from Octree, we have it.
+          // If not, we need to reconstruct it or read from buffer.
+
+          let starPos;
+          if (candidate.position) {
+            starPos = candidate.position.clone();
+          } else {
+            // Fallback reconstruction (slow path)
+            // This matches the logic in stars.js
+            const SCALE = 10000;
+            starPos = new THREE.Vector3(star.z * SCALE, star.x * SCALE, star.y * SCALE);
+          }
+
           starPos.applyMatrix4(stars.matrixWorld);
 
           // Project star position to screen space
@@ -125,7 +157,7 @@ export function setupTooltipSystem(
 
             if (dist < minScreenDist) {
               minScreenDist = dist;
-              closestObject = { data: starData[i], type: 'star' };
+              closestObject = { data: star, type: 'star' };
             }
           }
         }

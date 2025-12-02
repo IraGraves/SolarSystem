@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Octree } from '../utils/Octree.js';
 
 const ZODIAC_IDS = [
   'Ari',
@@ -124,6 +125,42 @@ export async function createStarfield(scene) {
       });
     }
 
+    // Build Octree
+    // Calculate bounds
+    const min = new THREE.Vector3(Infinity, Infinity, Infinity);
+    const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
+
+    processedData.forEach((star) => {
+      if (star.x != null) {
+        // Apply the same transformation as in the loop: x->z, y->x, z->y
+        const SCALE = 10000;
+        const x = star.z * SCALE;
+        const y = star.x * SCALE;
+        const z = star.y * SCALE;
+
+        if (x < min.x) min.x = x;
+        if (y < min.y) min.y = y;
+        if (z < min.z) min.z = z;
+        if (x > max.x) max.x = x;
+        if (y > max.y) max.y = y;
+        if (z > max.z) max.z = z;
+      }
+    });
+
+    // Add some padding
+    min.subScalar(100);
+    max.addScalar(100);
+
+    const octree = new Octree(new THREE.Box3(min, max), 64); // 64 stars per node capacity
+
+    processedData.forEach((star, index) => {
+      if (star.x != null) {
+        const SCALE = 10000;
+        const pos = new THREE.Vector3(star.z * SCALE, star.x * SCALE, star.y * SCALE);
+        octree.insert({ position: pos, data: star, index: index });
+      }
+    });
+
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geometry.setAttribute('starSize', new THREE.Float32BufferAttribute(sizes, 1));
@@ -151,7 +188,7 @@ export async function createStarfield(scene) {
     };
 
     const stars = new THREE.Points(geometry, material);
-    stars.userData = { starData: processedData };
+    stars.userData = { starData: processedData, octree: octree };
     stars.renderOrder = -1; // Ensure stars are rendered before everything else (background)
     scene.add(stars);
 
