@@ -32,7 +32,7 @@ export function createOrbitLine(data, orbitGroup) {
   const showDwarfColors = config.showDwarfPlanetColors;
   const isDwarf = data.type === 'dwarf';
   const useColor = isDwarf ? showDwarfColors : showColors;
-  const color = useColor ? (data.color || 0x444444) : 0x444444;
+  const color = useColor ? data.color || 0x444444 : 0x444444;
 
   const orbitMat = new THREE.LineBasicMaterial({
     color: color,

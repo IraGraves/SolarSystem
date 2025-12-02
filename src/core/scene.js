@@ -74,7 +74,7 @@ export function createScene() {
   shadowLight.shadow.bias = -0.00001;
   shadowLight.shadow.camera.near = 0.1;
   shadowLight.shadow.camera.far = 500;
-  
+
   // SpotLight specific
   shadowLight.angle = Math.PI / 8; // Narrow cone to target Earth
   shadowLight.penumbra = 0.1; // Soft edges
@@ -103,6 +103,6 @@ export function createScene() {
 
   // Lights are NOT added to scene here. They must be added to universeGroup/Sun in main.js
   // so they move with the coordinate system shifts.
-  
+
   return { scene, camera, renderer, controls, orbitGroup, zodiacGroup, sunLight, shadowLight };
 }
