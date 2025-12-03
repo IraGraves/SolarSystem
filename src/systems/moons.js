@@ -70,6 +70,8 @@ function addAxisLine(moonMesh, moonData) {
   });
   const moonAxisLine = new THREE.Line(moonAxisGeo, moonAxisMat);
   moonAxisLine.visible = config.showAxes;
+  // Disable raycasting for axis lines to prevent tooltip interference
+  moonAxisLine.raycast = () => {};
   moonMesh.add(moonAxisLine);
   moonData.axisLine = moonAxisLine;
 }

@@ -78,6 +78,15 @@ export function setupTooltipSystem(
       }
     }
 
+    // 1.5 Screen Space Fallback for Planets/Moons (Generous Hit)
+    // If we didn't hit a 3D mesh directly, check if we are close to one in screen space
+    if (!closestObject) {
+      const fallbackObject = findClosestObjectScreenSpace(mouseX, mouseY, camera, planets, sun);
+      if (fallbackObject) {
+        closestObject = fallbackObject;
+      }
+    }
+
     // 2. Check Stars (only if no 3D object found)
     // If we already hit a planet/sun, we skip stars to avoid confusion
     if (!closestObject) {
@@ -495,4 +504,56 @@ function distToSegmentSquared(x, y, x1, y1, x2, y2) {
   const px = x1 + t * (x2 - x1);
   const py = y1 + t * (y2 - y1);
   return (x - px) * (x - px) + (y - py) * (y - py);
+}
+
+/**
+ * Finds the closest object in screen space within a generous radius
+ * Used as a fallback when exact 3D raycasting fails (e.g. small objects)
+ */
+function findClosestObjectScreenSpace(mouseX, mouseY, camera, planets, sun) {
+  let closest = null;
+  let minDist = 20; // Pixel radius for "generous" hit
+
+  const check = (mesh, type, data) => {
+    if (!mesh || !mesh.visible) return;
+
+    // Get world position
+    const worldPos = new THREE.Vector3();
+    mesh.getWorldPosition(worldPos);
+
+    // Project to screen
+    const projected = worldPos.clone().project(camera);
+
+    // Check if in front of camera
+    if (projected.z < -1 || projected.z > 1) return;
+
+    // Convert to screen coords
+    const screenX = (projected.x * 0.5 + 0.5) * window.innerWidth;
+    const screenY = (-(projected.y * 0.5) + 0.5) * window.innerHeight;
+
+    // Distance
+    const dx = mouseX - screenX;
+    const dy = mouseY - screenY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < minDist) {
+      minDist = dist;
+      closest = { type, data };
+    }
+  };
+
+  // Check Sun
+  check(sun, 'sun', {});
+
+  // Check Planets and Moons
+  planets.forEach((p) => {
+    check(p.mesh, 'planet', p.data);
+    if (p.moons) {
+      p.moons.forEach((m) => {
+        check(m.mesh, 'moon', m.data);
+      });
+    }
+  });
+
+  return closest;
 }

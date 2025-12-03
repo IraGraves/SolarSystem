@@ -135,6 +135,8 @@ function createSun(scene) {
   });
   const sunAxisLine = new THREE.Line(sunAxisGeo, sunAxisMat);
   sunAxisLine.visible = config.showAxes;
+  // Disable raycasting for axis lines
+  sunAxisLine.raycast = () => {};
   sun.add(sunAxisLine);
   sun.axisLine = sunAxisLine;
 
@@ -195,6 +197,8 @@ export function createPlanets(scene, orbitGroup) {
     });
     const axisLine = new THREE.Line(axisGeo, axisMat);
     axisLine.visible = config.showAxes;
+    // Disable raycasting for axis lines
+    axisLine.raycast = () => {};
     mesh.add(axisLine);
     data.axisLine = axisLine;
 
