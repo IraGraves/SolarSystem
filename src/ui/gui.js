@@ -8,7 +8,7 @@ import { setupNavigationFolder } from './modules/navigation.js';
 import { setupScaleFolder } from './modules/scale.js';
 import { setupTimeFolder } from './modules/time.js';
 import { setupObjectsFolder, setupOverlaysFolder, setupVisualFolder } from './modules/visual.js';
-import { setupSoundUI } from './modules/sound.js';
+import { setupMusicWindow } from './modules/sound.js';
 import { setupSystemUI } from './modules/system.js';
 
 /**
@@ -76,6 +76,7 @@ export function setupGUI(
     scalePreset: 'Artistic',
     timeWindow: true,
     objectInfo: true,
+    musicWindow: false,
     dock: true,
   };
 
@@ -89,6 +90,10 @@ export function setupGUI(
     // Or just open the "Object Info" window?
     // Let's open Object Info window for now as a placeholder or "Inspector"
     windowManager.toggleWindow('object-info');
+  });
+
+  menuDock.addItem('music', '🎵', 'Music', () => {
+    windowManager.toggleWindow('music-window');
   });
 
   menuDock.addItem('settings', '⚙️', 'Settings', () => {
@@ -149,7 +154,8 @@ export function setupGUI(
   setupNavigationFolder(gui, uiState);
 
   // --- SOUND SECTION ---
-  setupSoundUI(gui);
+  // setupSoundUI(gui); // Removed, moved to window
+  setupMusicWindow();
 
   // --- WINDOWS SECTION ---
   const windowsFolder = gui.addFolder('Windows');
@@ -173,12 +179,23 @@ export function setupGUI(
     });
 
   windowsFolder
+    .add(uiState, 'musicWindow')
+    .name('Music')
+    .listen()
+    .onChange((v) => {
+      if (v) windowManager.showWindow('music-window');
+      else windowManager.hideWindow('music-window');
+    });
+
+  windowsFolder
     .add(uiState, 'dock')
     .name('Dock')
     .listen()
     .onChange((v) => {
       menuDock.dock.style.display = v ? 'flex' : 'none';
     });
+
+  windowsFolder.close();
 
   // --- SYSTEM SECTION ---
   setupSystemUI(gui, renderer);
@@ -243,6 +260,12 @@ export function updateUI(uiState, controls) {
   const infoWin = windowManager.getWindow('object-info');
   if (infoWin) {
     uiState.objectInfo = infoWin.element.style.display !== 'none';
+  }
+
+  const musicWin = windowManager.getWindow('music-window');
+  if (musicWin) {
+    uiState.musicWindow = musicWin.element.style.display !== 'none';
+    if (musicWin.update) musicWin.update();
   }
 
   if (menuDock.dock) {

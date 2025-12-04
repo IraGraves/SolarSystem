@@ -150,13 +150,13 @@
   left: 50%;
   width: 4px;
   height: 90px;
-  background: #ff5555;
+  background: var(--accent-color);
   transform-origin: center bottom;
   transform: rotate(0deg); /* Updated by JS */
   transition: transform 0.1s ease-out;
   border-radius: 2px;
   z-index: 2;
-  box-shadow: none; /* Reset gui.css */
+  box-shadow: 0 0 5px var(--accent-color);
 }
 
 .ui-window .digital-speed {

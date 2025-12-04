@@ -132,8 +132,37 @@ export class WindowManager {
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
 
-        winObj.x = initialWinX + dx;
-        winObj.y = initialWinY + dy;
+        let newX = initialWinX + dx;
+        let newY = initialWinY + dy;
+
+        // Snapping Logic
+        const SNAP_THRESHOLD = 20;
+        const SNAP_PADDING = 20;
+        const winWidth = winObj.element.offsetWidth;
+        const winHeight = winObj.element.offsetHeight;
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+
+        // Snap Left
+        if (Math.abs(newX - SNAP_PADDING) < SNAP_THRESHOLD) {
+          newX = SNAP_PADDING;
+        }
+        // Snap Right
+        else if (Math.abs(newX - (screenWidth - winWidth - SNAP_PADDING)) < SNAP_THRESHOLD) {
+          newX = screenWidth - winWidth - SNAP_PADDING;
+        }
+
+        // Snap Top
+        if (Math.abs(newY - SNAP_PADDING) < SNAP_THRESHOLD) {
+          newY = SNAP_PADDING;
+        }
+        // Snap Bottom
+        else if (Math.abs(newY - (screenHeight - winHeight - SNAP_PADDING)) < SNAP_THRESHOLD) {
+          newY = screenHeight - winHeight - SNAP_PADDING;
+        }
+
+        winObj.x = newX;
+        winObj.y = newY;
 
         winObj.element.style.transform = `translate3d(${winObj.x}px, ${winObj.y}px, 0)`;
         e.preventDefault(); // Prevent selection while dragging
