@@ -125,7 +125,7 @@ export function setupVisualFolder(
       Off: 'off',
     })
     .name('Object Info');
-  objectInfoCtrl.domElement.classList.add('full-width');
+  // objectInfoCtrl.domElement.classList.add('full-width'); // Removed to fix visibility issue
 
   visualFolder.close(); // Close Visual folder by default
 }
