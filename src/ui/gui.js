@@ -12,10 +12,7 @@ import {
   setupAsterismsControlsCustom,
   setupOrbitsControlsCustom,
   setupMagneticFieldsControlsCustom,
-  setupConstellationsControls,
-  setupOrbitsControls,
-  setupMagneticFieldsControls,
-  setupExtraOverlaysControls,
+  setupGuidesControlsCustom,
   setupVisualFolder,
 } from './modules/visual.js';
 import { setupMusicWindow } from './modules/sound.js';
@@ -98,15 +95,15 @@ export function setupGUI(
     focusExit: 'Escape Key',
     fullScreen: 'F11',
     scalePreset: 'Artistic',
-    timeWindow: true,
-    objectInfo: true,
+    timeWindow: false,
+    objectInfo: false,
     musicWindow: false,
     dock: true,
     visualWindow: false,
   };
 
   // --- SETUP DOCK ---
-  menuDock.addItem('objects', '🔭', 'Object Info', () => {
+  menuDock.addItem('objects', '👆', 'Object Info', () => {
     // For now, we don't have a dedicated Objects window, maybe we can toggle the Objects folder in lil-gui?
     // Or just open the "Object Info" window?
     // Let's open Object Info window for now as a placeholder or "Inspector"
@@ -119,14 +116,6 @@ export function setupGUI(
 
   menuDock.addItem('music', '🎵', 'Music', () => {
     windowManager.toggleWindow('music-window');
-  });
-
-
-
-
-  menuDock.addItem('settings', '⚙️', 'Settings', () => {
-    if (gui._closed) gui.open();
-    else gui.close();
   });
 
   // --- FIND SECTION ---
@@ -142,60 +131,62 @@ export function setupGUI(
   // --- VISUAL TOOLS WINDOW (Tabbed) ---
   const visualWindow = new TabbedWindow('visual-tools', 'Visual Tools', {
     x: window.innerWidth - 340,
-    y: window.innerHeight - 500,
+    y: window.innerHeight - 340,
     width: '320px',
   });
 
   // Helper to create a tab with an embedded lil-gui
-  const createGuiTab = (id, title, setupFn) => {
-    const container = document.createElement('div');
-    container.style.width = '100%';
-    // lil-gui container adjustments
-    container.classList.add('gui-tab-container');
-    
-    const tabGui = new GUI({ container: container, width: '100%' });
-    tabGui.domElement.style.position = 'relative';
-    tabGui.domElement.style.top = '0';
-    tabGui.domElement.style.right = 'auto'; // Reset default absolute positioning
-    // Remove the title bar of the embedded gui if desired, or keep it. 
-    // Usually embedded guis don't need a main title bar if the tab is the title.
-    tabGui.title(''); 
-    tabGui.domElement.querySelector('.title').style.display = 'none';
-
-    setupFn(tabGui);
-    
-    visualWindow.addTab(id, title, container);
-    return tabGui;
-  };
 
   // Helper to create a tab with custom content
-  const createCustomTab = (id, title, setupFn) => {
+  const createCustomTab = (id, title, iconOrSetup, setupFn) => {
+    let icon = '';
+    let setup = setupFn;
+
+    // Handle overload: (id, title, setupFn)
+    if (typeof iconOrSetup === 'function') {
+      setup = iconOrSetup;
+      icon = ''; // Default or infer?
+      console.warn(`[createCustomTab] Called with 3 args for '${id}'. Icon missing.`);
+    } else {
+      icon = iconOrSetup;
+    }
+
+    if (typeof setup !== 'function') {
+      console.error(`[createCustomTab] Error: setup is not a function for '${id}'`, setup);
+      return;
+    }
+
     const container = document.createElement('div');
     container.style.width = '100%';
     // container.classList.add('custom-tab-container');
-    setupFn(container);
-    visualWindow.addTab(id, title, container);
+    setup(container);
+    visualWindow.addTab(id, title, container, icon);
   };
 
   // createGuiTab('objects', 'Objects', (g) => setupObjectsControls(g, planets, sun));
-  createCustomTab('objects', 'Objects', (container) => setupObjectsControlsCustom(container, planets, sun));
-  createCustomTab('constellations', 'Asterisms', (container) => setupAsterismsControlsCustom(container, zodiacGroup, constellationsGroup, zodiacSignsGroup));
+  createCustomTab('objects', 'Bodies', '🪐', (container) =>
+    setupObjectsControlsCustom(container, planets, sun)
+  );
+  createCustomTab('constellations', 'Asterisms', '✨', (container) =>
+    setupAsterismsControlsCustom(container, zodiacGroup, constellationsGroup, zodiacSignsGroup)
+  );
   // createGuiTab('constellations', 'Asterisms', (g) => setupConstellationsControls(g, zodiacGroup, constellationsGroup, zodiacSignsGroup));
   console.log('[DEBUG] Setting up Orbits Custom Tab...');
-  createCustomTab('orbits', 'Orbits', (container) => setupOrbitsControlsCustom(container, orbitGroup, planets, relativeOrbitGroup));
+  createCustomTab('orbits', 'Orbits', '💫', (container) =>
+    setupOrbitsControlsCustom(container, orbitGroup, planets, relativeOrbitGroup)
+  );
   console.log('[DEBUG] Orbits Custom Tab Setup Initiated.');
   // createGuiTab('orbits', 'Orbits', (g) => setupOrbitsControls(g, orbitGroup, planets, relativeOrbitGroup));
-  createCustomTab('magnetic', 'Magnetism', (container) => setupMagneticFieldsControlsCustom(container, magneticFieldsGroup, planets, universeGroup));
-  // createGuiTab('magnetic', 'Magnetism', (g) => setupMagneticFieldsControls(g, magneticFieldsGroup, planets, universeGroup));
+  createCustomTab('magnetic', 'Magnetism', '🧲', (container) =>
+    setupMagneticFieldsControlsCustom(container, magneticFieldsGroup, planets, universeGroup)
+  );
+  createCustomTab('guides', 'Guides', '📐', (container) =>
+    setupGuidesControlsCustom(container, sun, planets, habitableZone)
+  );
 
   menuDock.addItem('visuals', '👁️', 'Visual Tools', () => {
     visualWindow.toggle();
   });
-
-  // --- OVERLAYS SECTION (Remaining items) ---
-  const overlaysFolder = gui.addFolder('Guides'); // Renamed from Overlays
-  setupExtraOverlaysControls(overlaysFolder, sun, planets, habitableZone);
-  overlaysFolder.close();
 
   // --- SCALE SECTION ---
   const scaleCtrl = setupScaleFolder(gui, uiState, planets, sun, universeGroup);

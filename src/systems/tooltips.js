@@ -38,6 +38,9 @@ export function setupTooltipSystem(
     },
   });
 
+  // Start hidden
+  windowManager.hideWindow('object-info');
+
   // We don't need to manually append or handle drag anymore.
   // infoWindowObj.element is the window DOM element.
   const infoWindow = infoWindowObj.element; // Keep reference for existing logic checking .info-window class
@@ -280,7 +283,16 @@ export function setupTooltipSystem(
         tooltip.style.top = `${top}px`;
       } else if (config.objectInfoMode === 'window') {
         tooltip.style.display = 'none';
-        windowManager.showWindow('object-info');
+
+        // Only update if window is open (Inspector mode)
+        const winState = windowManager.getWindow('object-info');
+        if (winState && winState.element.style.display !== 'none') {
+          // Window is open, we can update it.
+          // Ensure we don't force it open if it was closed.
+        } else {
+          // Window is closed. Do not force open.
+          return;
+        }
 
         // Update window content
         infoWindowObj.content.innerHTML = content;
@@ -491,19 +503,19 @@ function calculatePlanetLiveData(data) {
 function calculateSunLiveData() {
   try {
     const date = config.date instanceof Date ? config.date : new Date();
-    
+
     // GeoVector('Sun') gives vector from Earth to Sun
     // But wait, Astronomy.Body.Sun is defined.
     // Astronomy.GeoVector(Body.Sun, date, aberration)
     const geo = Astronomy.GeoVector(Astronomy.Body.Sun, date, true);
-    
+
     const distAu = Math.sqrt(geo.x ** 2 + geo.y ** 2 + geo.z ** 2);
     // Light travel time: 1 AU = 499.00478 seconds
     const lightTimeMin = ((distAu * 499.00478) / 60).toFixed(2);
-    
+
     return {
       distanceAU: distAu.toFixed(3),
-      lightTime: lightTimeMin
+      lightTime: lightTimeMin,
     };
   } catch (e) {
     Logger.warn('Error calculating live data for Sun', e);
@@ -520,18 +532,18 @@ function formatLiveDataSection(liveData) {
   let html = `<div class="tooltip-live-section"><span class="tooltip-live-title">Live Data</span>`;
 
   if (liveData.trueAnomaly) {
-      html += `<div class="tooltip-row"><span class="tooltip-label">True Anomaly</span><span class="tooltip-value">${liveData.trueAnomaly}°</span></div>`;
+    html += `<div class="tooltip-row"><span class="tooltip-label">True Anomaly</span><span class="tooltip-value">${liveData.trueAnomaly}°</span></div>`;
   }
   if (liveData.velocity) {
-      html += `<div class="tooltip-row"><span class="tooltip-label">Helio Velocity</span><span class="tooltip-value">${liveData.velocity} km/s</span></div>`;
+    html += `<div class="tooltip-row"><span class="tooltip-label">Helio Velocity</span><span class="tooltip-value">${liveData.velocity} km/s</span></div>`;
   }
   if (liveData.distanceAU) {
-      html += `<div class="tooltip-row"><span class="tooltip-label">Dist to Earth</span><span class="tooltip-value">${liveData.distanceAU} AU</span></div>`;
+    html += `<div class="tooltip-row"><span class="tooltip-label">Dist to Earth</span><span class="tooltip-value">${liveData.distanceAU} AU</span></div>`;
   }
   if (liveData.lightTime) {
-      html += `<div class="tooltip-row"><span class="tooltip-label">Light Time</span><span class="tooltip-value">${liveData.lightTime} min</span></div>`;
+    html += `<div class="tooltip-row"><span class="tooltip-label">Light Time</span><span class="tooltip-value">${liveData.lightTime} min</span></div>`;
   }
-  
+
   html += `</div>`;
   return html;
 }
@@ -554,10 +566,10 @@ function formatSunTooltip() {
     { label: 'Rotation', value: '~27 days (Differential)' },
     { label: 'Age', value: '4.6 Billion Years' },
   ];
-  
+
   const liveData = calculateSunLiveData();
   const liveSection = liveData ? formatLiveDataSection(liveData) : null;
-  
+
   return buildTooltip('Sun', fields, liveSection);
 }
 
@@ -569,13 +581,13 @@ function formatSunTooltip() {
  */
 function formatDecimal(value) {
   if (typeof value !== 'number') return value;
-  
+
   const absVal = Math.abs(value);
-  
+
   if (absVal >= 1000) {
     return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
   } else if (absVal >= 10) {
-     return value.toLocaleString('en-US', { maximumFractionDigits: 1 });
+    return value.toLocaleString('en-US', { maximumFractionDigits: 1 });
   } else {
     // For very small numbers, up to 3 significant digits or fixed decimals?
     // Let's go with max 3 decimals for consistency with "0.38" etc.
@@ -602,13 +614,13 @@ function formatPlanetTooltip(data) {
     const earthMass = 5.97e24;
     const massInEarths = data.details.mass / earthMass;
     const massInKg = data.details.mass.toExponential(2).replace('e+', ' × 10^');
-    
+
     // For small masses, showing "0.00 x Earth" is not useful, but we can verify.
     let relativeStr = `${formatDecimal(massInEarths)} x Earth`;
     if (massInEarths < 0.01) {
-        relativeStr = `${massInEarths.toExponential(2)} x Earth`;
+      relativeStr = `${massInEarths.toExponential(2)} x Earth`;
     }
-    
+
     massStr = `${massInKg} kg (${relativeStr})`;
   }
 
@@ -623,7 +635,7 @@ function formatPlanetTooltip(data) {
       { label: 'Albedo', value: data.details.albedo },
       { label: 'Surface Temp', value: data.details.temp }
     );
-    
+
     // Only show Pressure if not "Unknown (Gas Giant)"
     fields.push({ label: 'Surface Pressure', value: data.details.pressure });
 

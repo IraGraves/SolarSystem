@@ -801,30 +801,40 @@ export function setupMagneticFieldsControlsCustom(container, magneticFieldsGroup
     {
       configKey: 'showSunMagneticField',
       label: 'Solar Wind',
-      icon: '🌀',
+      icon: '🌬️',
       updateFn: () => {
-        if (universeGroup) {
-          const field = universeGroup.children.find((c) => c.name === 'MagneticField');
-          if (field) field.visible = config.showSunMagneticField;
-        }
+         if (universeGroup) {
+            const field = universeGroup.children.find((c) => c.name === 'MagneticField');
+            if (field) field.visible = config.showSunMagneticField;
+         }
       },
-    },
-    {
-      configKey: 'showMagneticFields',
-      label: 'Planets, Moons',
-      icon: '🧲',
-      updateFn: () => updateMagneticFieldsVisibility(config.showMagneticFields, magneticFieldsGroup, planets, null),
       childToggle: {
-        configKey: 'capMagneticFields',
-        label: 'Cap',
-        updateFn: () => updateMagneticFieldScales(planets),
+        configKey: 'showSunMagneticFieldBasic',
+        label: 'Basic',
+        updateFn: () => {
+            if (universeGroup) {
+              const field = universeGroup.children.find((c) => c.name === 'SunMagneticFieldBasic');
+              if (field) field.visible = config.showSunMagneticFieldBasic;
+            }
+        }
       }
     },
+    {
+        configKey: 'showMagneticFields',
+        label: 'Planets, Moons',
+        icon: '🧲',
+        updateFn: () => updateMagneticFieldsVisibility(config.showMagneticFields, magneticFieldsGroup, planets, null),
+        childToggle: {
+            configKey: 'capMagneticFields',
+            label: 'Cap',
+            updateFn: () => updateMagneticFieldScales(planets),
+        }
+    }
   ];
 
   const list = document.createElement('div');
   list.className = 'object-list';
-
+  
   items.forEach((item) => {
     const el = document.createElement('div');
     el.className = 'object-item';
@@ -880,6 +890,54 @@ export function setupMagneticFieldsControlsCustom(container, magneticFieldsGroup
       }
 
       item.updateFn();
+    });
+
+    list.appendChild(el);
+  });
+
+  container.appendChild(list);
+}
+
+export function setupGuidesControlsCustom(container, sun, planets, habitableZone) {
+  const items = [
+    {
+      configKey: 'showAxes',
+      label: 'Axes',
+      icon: '📏',
+      updateFn: (val) => updateAxesVisibility(val, sun, planets),
+    },
+    {
+      configKey: 'showHabitableZone',
+      label: 'Habitable Zone',
+      icon: '🟢',
+      updateFn: (val) => updateHabitableZoneVisibility(val, habitableZone),
+    },
+  ];
+
+  const list = document.createElement('div');
+  list.className = 'object-list';
+
+  items.forEach((item) => {
+    const el = document.createElement('div');
+    el.className = 'object-item';
+    if (config[item.configKey]) el.classList.add('active');
+
+    el.innerHTML = `
+        <div class="object-icon">${item.icon}</div>
+        <div class="object-label">${item.label}</div>
+    `;
+
+    el.addEventListener('click', () => {
+      // Toggle config
+      config[item.configKey] = !config[item.configKey];
+      const isActive = config[item.configKey];
+
+      // Update UI
+      if (isActive) el.classList.add('active');
+      else el.classList.remove('active');
+
+      // Trigger update
+      item.updateFn(isActive);
     });
 
     list.appendChild(el);

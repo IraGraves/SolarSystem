@@ -11,6 +11,9 @@ export function setupTimeFolder(_gui, uiState, config) {
     },
   });
 
+  // Start hidden
+  windowManager.hideWindow('time-window');
+
   const content = timeWindowObj.content;
   content.classList.add('time-window-content');
 

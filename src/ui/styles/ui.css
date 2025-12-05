@@ -249,67 +249,32 @@
   position: relative;
 }
 
-.tab-scroll-container {
-  flex: 1;
-  overflow: hidden; /* Hide scrollbar */
-  position: relative;
-  margin: 0 4px; /* Space from arrows */
-}
+
 
 .tab-list {
   display: flex;
   gap: 2px;
-  transition: transform 0.3s ease; /* Smooth scroll if we use transform, or just scroll behavior */
-  overflow-x: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE */
-  scroll-behavior: smooth;
+  flex: 1; /* Take available space */
 }
 
-.tab-list::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
-}
 
-.scroll-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #aaa;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 16px; /* Larger arrow */
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  height: 28px; /* Match tab height roughly */
-  user-select: none;
-}
-
-.scroll-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-}
-
-.scroll-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
-  pointer-events: none;
-}
 
 .tab-item {
-  padding: 8px 16px;
+  padding: 8px 10px; /* Reduced horizontal padding */
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px 8px 0 0;
   cursor: pointer;
   color: #aaa;
-  font-size: 12px;
+  font-size: 13px; /* Slightly smaller font */
   user-select: none;
   transition: all 0.2s;
   position: relative;
-  white-space: nowrap; /* Keep this */
-  flex-shrink: 0; /* Prevent shrinking now that we scroll */
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px; /* Reduced gap */
+  border-bottom: 2px solid transparent;
 }
 
 .tab-item:hover {
@@ -321,16 +286,23 @@
   background: rgba(255, 255, 255, 0.15);
   color: #44aaff;
   font-weight: 600;
+  border-bottom-color: #44aaff;
 }
 
 .tab-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: #44aaff;
+  display: none; /* Remove the old underline pseudo-element since we use border-bottom now */
+}
+
+.tab-icon {
+  font-size: 1.2em;
+}
+
+.tab-title {
+  display: none;
+}
+
+.tab-item.active .tab-title {
+  display: block;
 }
 
 .tab-content-area {
