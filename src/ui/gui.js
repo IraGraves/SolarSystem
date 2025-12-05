@@ -9,6 +9,8 @@ import { setupScaleFolder } from './modules/scale.js';
 import { setupTimeFolder } from './modules/time.js';
 import {
   setupObjectsControlsCustom,
+  setupAsterismsControlsCustom,
+  setupOrbitsControlsCustom,
   setupConstellationsControls,
   setupOrbitsControls,
   setupMagneticFieldsControls,
@@ -176,8 +178,12 @@ export function setupGUI(
 
   // createGuiTab('objects', 'Objects', (g) => setupObjectsControls(g, planets, sun));
   createCustomTab('objects', 'Objects', (container) => setupObjectsControlsCustom(container, planets, sun));
-  createGuiTab('constellations', 'Constellations', (g) => setupConstellationsControls(g, zodiacGroup, constellationsGroup, zodiacSignsGroup));
-  createGuiTab('orbits', 'Orbits', (g) => setupOrbitsControls(g, orbitGroup, planets, relativeOrbitGroup));
+  createCustomTab('constellations', 'Asterisms', (container) => setupAsterismsControlsCustom(container, zodiacGroup, constellationsGroup, zodiacSignsGroup));
+  // createGuiTab('constellations', 'Asterisms', (g) => setupConstellationsControls(g, zodiacGroup, constellationsGroup, zodiacSignsGroup));
+  console.log('[DEBUG] Setting up Orbits Custom Tab...');
+  createCustomTab('orbits', 'Orbits', (container) => setupOrbitsControlsCustom(container, orbitGroup, planets, relativeOrbitGroup));
+  console.log('[DEBUG] Orbits Custom Tab Setup Initiated.');
+  // createGuiTab('orbits', 'Orbits', (g) => setupOrbitsControls(g, orbitGroup, planets, relativeOrbitGroup));
   createGuiTab('magnetic', 'Magnetism', (g) => setupMagneticFieldsControls(g, magneticFieldsGroup, planets, universeGroup));
 
   menuDock.addItem('visuals', '👁️', 'Visual Tools', () => {

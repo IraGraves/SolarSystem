@@ -294,7 +294,7 @@ export function setupConstellationsControls(gui, zodiacGroup, constellationsGrou
   // Constellations (All 88)
   const constellationsCtrl = gui
     .add(config, 'showConstellations')
-    .name('Constellations (All)')
+    .name('Asterisms (All)')
     .onChange(() => updateConstellationsVisibility(zodiacGroup, constellationsGroup));
   constellationsCtrl.domElement.classList.add('checkbox-left');
 
@@ -477,7 +477,7 @@ export function setupOverlaysFolder(
 ) {
   const overlaysFolder = gui.addFolder('Overlays');
 
-  const constellationsFolder = overlaysFolder.addFolder('Constellations');
+  const constellationsFolder = overlaysFolder.addFolder('Asterisms');
   constellationsFolder.domElement.classList.add('constellations-folder');
   setupConstellationsControls(constellationsFolder, zodiacGroup, constellationsGroup, zodiacSignsGroup);
   constellationsFolder.close();
@@ -613,6 +613,170 @@ export function setupObjectsControlsCustom(container, planets, sun) {
 
       // Trigger update
       item.updateFn(isActive);
+    });
+
+    list.appendChild(el);
+  });
+
+  container.appendChild(list);
+}
+
+export function setupAsterismsControlsCustom(container, zodiacGroup, constellationsGroup, zodiacSignsGroup) {
+  const items = [
+    {
+      configKey: 'showConstellations',
+      label: 'Asterisms (All)',
+      icon: '✨',
+      updateFn: () => updateConstellationsVisibility(zodiacGroup, constellationsGroup),
+    },
+    {
+      configKey: 'showZodiacs',
+      label: 'Zodiacs',
+      icon: '⁂',
+      updateFn: () => updateConstellationsVisibility(zodiacGroup, constellationsGroup),
+    },
+    {
+      configKey: 'showZodiacSigns',
+      label: 'Zodiac Signs',
+      icon: '🦁',
+      updateFn: (val) => updateZodiacSignsVisibility(val, zodiacSignsGroup),
+    },
+  ];
+
+  const list = document.createElement('div');
+  list.className = 'object-list';
+
+  items.forEach((item) => {
+    const el = document.createElement('div');
+    el.className = 'object-item';
+    if (config[item.configKey]) el.classList.add('active');
+
+    el.innerHTML = `
+        <div class="object-icon">${item.icon}</div>
+        <div class="object-label">${item.label}</div>
+    `;
+
+    el.addEventListener('click', () => {
+      // Toggle config
+      config[item.configKey] = !config[item.configKey];
+      const isActive = config[item.configKey];
+
+      // Update UI
+      if (isActive) el.classList.add('active');
+      else el.classList.remove('active');
+
+      // Trigger update
+      item.updateFn(isActive);
+    });
+
+    list.appendChild(el);
+  });
+
+  container.appendChild(list);
+  container.appendChild(list);
+}
+
+export function setupOrbitsControlsCustom(container, orbitGroup, planets, relativeOrbitGroup) {
+  const items = [
+    {
+      configKey: 'showSunOrbits',
+      label: 'Sun',
+      icon: '☀️',
+      updateFn: () => updateOrbitsVisibility(orbitGroup, planets, null),
+    },
+    {
+      configKey: 'showPlanetOrbits',
+      label: 'Planets',
+      icon: '🪐',
+      updateFn: () => updateOrbitsVisibility(orbitGroup, planets, null),
+      childToggle: {
+        configKey: 'showPlanetColors',
+        label: 'Colors',
+        updateFn: () => updateOrbitColors(orbitGroup, relativeOrbitGroup, planets),
+      }
+    },
+    {
+      configKey: 'showDwarfPlanetOrbits',
+      label: 'Dwarf Planets',
+      icon: '🪨',
+      updateFn: () => updateOrbitsVisibility(orbitGroup, planets, null),
+      childToggle: {
+        configKey: 'showDwarfPlanetColors',
+        label: 'Colors',
+        updateFn: () => updateOrbitColors(orbitGroup, relativeOrbitGroup, planets),
+      }
+    },
+    {
+      configKey: 'showMoonOrbits',
+      label: 'Moons',
+      icon: '🌕',
+      updateFn: () => updateOrbitsVisibility(orbitGroup, planets, null),
+      childToggle: {
+        configKey: 'capMoonOrbits',
+        label: 'Cap',
+        updateFn: () => {}, // Handled in animation loop or updateOrbitsVisibility
+      }
+    },
+  ];
+
+  const list = document.createElement('div');
+  list.className = 'object-list';
+
+  items.forEach((item) => {
+    const el = document.createElement('div');
+    el.className = 'object-item';
+    if (config[item.configKey]) el.classList.add('active');
+
+    // Main Content
+    const leftPart = document.createElement('div');
+    leftPart.style.display = 'flex';
+    leftPart.style.alignItems = 'center';
+    leftPart.style.flexGrow = '1';
+    leftPart.innerHTML = `
+        <div class="object-icon">${item.icon}</div>
+        <div class="object-label">${item.label}</div>
+    `;
+    el.appendChild(leftPart);
+
+    // Child Toggle (if any)
+    let toggleEl = null;
+
+    if (item.childToggle) {
+      toggleEl = document.createElement('div');
+      toggleEl.className = 'object-toggle';
+      if (config[item.childToggle.configKey]) toggleEl.classList.add('active');
+      toggleEl.textContent = item.childToggle.label;
+      
+      toggleEl.style.display = config[item.configKey] ? 'flex' : 'none';
+
+      toggleEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        config[item.childToggle.configKey] = !config[item.childToggle.configKey];
+        const isToggleActive = config[item.childToggle.configKey];
+        
+        if (isToggleActive) toggleEl.classList.add('active');
+        else toggleEl.classList.remove('active');
+
+        if (item.childToggle.updateFn) item.childToggle.updateFn();
+      });
+
+      el.appendChild(toggleEl);
+    }
+
+    // Main Click
+    leftPart.addEventListener('click', () => {
+      config[item.configKey] = !config[item.configKey];
+      const isActive = config[item.configKey];
+
+      if (isActive) {
+        el.classList.add('active');
+        if (toggleEl) toggleEl.style.display = 'flex';
+      } else {
+        el.classList.remove('active');
+        if (toggleEl) toggleEl.style.display = 'none';
+      }
+
+      item.updateFn();
     });
 
     list.appendChild(el);
