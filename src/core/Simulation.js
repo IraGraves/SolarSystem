@@ -38,7 +38,7 @@ import { setupGUI, updateUI } from '../ui/gui.js';
 import { Logger } from '../utils/logger.js';
 import { createPlanets, updatePlanets } from './planets.js';
 import { createScene } from './scene.js';
-import { createAsterisms, createStarfield } from './stars.js';
+import { createAsterisms, createConstellations, createStarfield } from './stars.js';
 
 export class Simulation {
   constructor() {
@@ -99,6 +99,10 @@ export class Simulation {
 
       zodiacGroup.visible = config.showZodiacs;
 
+      const constellationsGroup = new THREE.Group();
+      this.universeGroup.add(constellationsGroup);
+      constellationsGroup.visible = config.showConstellations;
+
       // 1.5 Create Zodiac Signs
       const textureLoader = new THREE.TextureLoader();
       const zodiacSignsGroup = createZodiacSigns(this.universeGroup, textureLoader);
@@ -135,7 +139,8 @@ export class Simulation {
         zodiacSignsGroup,
         habitableZone,
         this.magneticFieldsGroup, // Use the stored group
-        this.universeGroup
+        this.universeGroup,
+        constellationsGroup
       );
 
       setupTooltipSystem(camera, planets, sun, this.starsRef, zodiacGroup, asterismsGroup);
@@ -181,7 +186,8 @@ export class Simulation {
             this.starsRef.value = stars;
             this.starsRef.value = stars;
             // Opacity now handled by StarManager internally based on config
-            createConstellations(zodiacGroup, constellationsGroup, rawData);
+            createAsterisms(zodiacGroup, asterismsGroup, rawData);
+            createConstellations(constellationsGroup); // Add boundaries to dedicated group
             alignZodiacSigns(zodiacSignsGroup, rawData);
           }
         })

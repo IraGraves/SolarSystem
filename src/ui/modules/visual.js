@@ -228,6 +228,12 @@ export function updateAsterismsVisibility(zodiacGroup, asterismsGroup) {
   }
 }
 
+export function updateConstellationsBoundariesVisibility(constellationsGroup) {
+  if (constellationsGroup) {
+    constellationsGroup.visible = config.showConstellations;
+  }
+}
+
 export function updateZodiacSignsVisibility(val, zodiacSignsGroup) {
   if (zodiacSignsGroup) {
     zodiacSignsGroup.visible = val;
@@ -649,21 +655,28 @@ export function setupObjectsControlsCustom(container, planets, sun) {
 export function setupAsterismsControlsCustom(
   container,
   zodiacGroup,
-  constellationsGroup,
-  zodiacSignsGroup
+  asterismsGroup,
+  zodiacSignsGroup,
+  constellationsGroup
 ) {
   const items = [
     {
       configKey: 'showConstellations',
+      label: 'Constellations',
+      icon: '🌐',
+      updateFn: () => updateConstellationsBoundariesVisibility(constellationsGroup),
+    },
+    {
+      configKey: 'showAsterisms',
       label: 'Asterisms (All)',
       icon: '✨',
-      updateFn: () => updateConstellationsVisibility(zodiacGroup, constellationsGroup),
+      updateFn: () => updateAsterismsVisibility(zodiacGroup, asterismsGroup),
     },
     {
       configKey: 'showZodiacs',
       label: 'Zodiacs',
       icon: '⁂',
-      updateFn: () => updateConstellationsVisibility(zodiacGroup, constellationsGroup),
+      updateFn: () => updateAsterismsVisibility(zodiacGroup, asterismsGroup),
     },
     {
       configKey: 'showZodiacSigns',

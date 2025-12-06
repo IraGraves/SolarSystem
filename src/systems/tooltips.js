@@ -38,6 +38,7 @@ import * as THREE from 'three';
 import { Logger } from '../utils/logger.js';
 import { config } from '../config.js';
 import { windowManager } from '../ui/WindowManager.js';
+import { CONSTELLATION_NAMES } from '../data/constellationNames.js';
 
 
 const SCREEN_HIT_RADIUS = 10; // Pixels on screen for hit detection
@@ -821,8 +822,8 @@ function formatMoonTooltip(data, parentName) {
  * @returns {string} HTML string
  */
 function formatStarTooltip(data) {
-  const distance = data.distance ? (data.distance * 3.26156).toFixed(1) : 'N/A';
-  const luminosity = data.luminosity ? data.luminosity.toFixed(2) : 'N/A';
+  const distance = data.distance ? (data.distance * 3.26156).toLocaleString('en-US', { maximumFractionDigits: 1 }) : 'N/A';
+  const luminosity = data.luminosity ? data.luminosity.toLocaleString('en-US', { maximumFractionDigits: 2 }) : 'N/A';
   
   let name = data.name;
   if (!name) {
@@ -831,7 +832,6 @@ function formatStarTooltip(data) {
     else name = `HR ${data.id}`;
   }
   
-  // Use explicit spectral type if available, else derive? (Data now has it)
   const type = data.spectralType || 'Unknown';
   
   const fields = [
@@ -840,19 +840,23 @@ function formatStarTooltip(data) {
     { label: 'Luminosity', value: `${luminosity} L☉` },
   ];
 
+  if (data.constellation) {
+    const conName = CONSTELLATION_NAMES[data.constellation] || data.constellation;
+    fields.push({ label: 'Constellation', value: `${conName} (${data.constellation})` });
+  }
+
   if (data.temperature) {
-     fields.push({ label: 'Temp', value: `${Math.round(data.temperature)} K` });
+     fields.push({ label: 'Temp', value: `${Math.round(data.temperature).toLocaleString('en-US')} K` });
   }
 
   if (data.mass) {
-      fields.push({ label: 'Mass', value: `${data.mass.toFixed(2)} M☉` });
+      fields.push({ label: 'Mass', value: `${data.mass.toLocaleString('en-US', { maximimumFractionDigits: 2 })} M☉` });
   }
 
   if (data.radius) {
-      fields.push({ label: 'Radius', value: `${data.radius.toFixed(2)} R☉` });
+      fields.push({ label: 'Radius', value: `${data.radius.toLocaleString('en-US', { maximimumFractionDigits: 2 })} R☉` });
   }
 
-  // Use pre-calculated magnitude from expensive offline processing if available
   if (data.mag !== undefined) {
       fields.push({ label: 'Apparent Mag', value: data.mag.toFixed(2) });
   } else if (data.luminosity && data.distance) {
@@ -868,12 +872,34 @@ function formatStarTooltip(data) {
     fields.push({ label: 'HD ID', value: data.hd });
   }
 
-  // If no specific IDs, show internal or generic
   if (!data.hip && !data.hd) {
     fields.push({ label: 'Catalog ID', value: data.id });
   }
 
   return buildTooltip(name, fields);
+}
+
+/**
+ * Formats tooltip for an asterism
+ * @param {Object} data - Asterism/Constellation data
+ * @returns {string} HTML string
+ */
+function formatAsterismTooltip(data) {
+  const code = data.id;
+  const fullName = CONSTELLATION_NAMES[code] || code;
+
+  const fields = [
+      { label: 'Code', value: code },
+      { label: 'Full Name', value: fullName }
+  ];
+
+  if (data.type === 'constellation') {
+      fields.push({label: 'Type', value: 'Constellation Boundary'});
+  } else {
+      fields.push({label: 'Type', value: 'Asterism'});
+  }
+
+  return buildTooltip(fullName, fields);
 }
 
 /**
@@ -904,8 +930,10 @@ function formatTooltip(closestObject) {
         return formatMoonTooltip(data, closestObject.parentName);
       case 'star':
         return formatStarTooltip(data);
-      case 'constellation':
-        return formatConstellationTooltip(data);
+      case 'constellation': // Fallthrough or specialized
+        return formatAsterismTooltip(data);
+      case 'asterism':
+        return formatAsterismTooltip(data);
       default:
         return '';
     }

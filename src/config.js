@@ -42,6 +42,7 @@ export const config = {
   coordinateSystem: 'Heliocentric', // 'Heliocentric', 'Geocentric', 'Barycentric', 'Tychonic'
   referencePlane: 'Ecliptic', // 'Equatorial' or 'Ecliptic'
   showZodiacs: false, // Constellation lines
+  showConstellations: false, // Constellation regions/boundaries
   showAsterisms: false,
   showZodiacSigns: false, // Zodiac sign sprites
   showHabitableZone: false,

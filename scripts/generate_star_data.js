@@ -353,6 +353,7 @@ async function generate() {
         radius,
         mass,
         temp,
+        con: row.con || '',
       });
     });
 
@@ -422,8 +423,17 @@ async function generate() {
         buffer[offset + 9] = star.temp;
         buffer[offset + 10] = star.mag;
 
-        // Meta: [id, name, bayer, flam, hip, hd, spect]
-        meta.push([star.id, star.name, star.bayer, star.flam, star.hip, star.hd, star.spect]);
+        // Meta: [id, name, bayer, flam, hip, hd, spect, con]
+        meta.push([
+          star.id,
+          star.name,
+          star.bayer,
+          star.flam,
+          star.hip,
+          star.hd,
+          star.spect,
+          star.con, // Added Constellation
+        ]);
       });
 
       // Write

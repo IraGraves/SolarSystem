@@ -61,7 +61,8 @@ export function setupGUI(
   zodiacSignsGroup,
   habitableZone,
   magneticFieldsGroup,
-  universeGroup
+  universeGroup,
+  constellationsGroup
 ) {
   const gui = new GUI({ title: 'Menu' });
   gui.domElement.classList.add('main-gui');
@@ -154,7 +155,7 @@ export function setupGUI(
     setupObjectsControlsCustom(container, planets, sun)
   );
   createCustomTab('asterisms', 'Asterisms', '✨', (container) =>
-    setupAsterismsControlsCustom(container, zodiacGroup, asterismsGroup, zodiacSignsGroup)
+    setupAsterismsControlsCustom(container, zodiacGroup, asterismsGroup, zodiacSignsGroup, constellationsGroup)
   );
   createCustomTab('orbits', 'Orbits', '💫', (container) =>
     setupOrbitsControlsCustom(container, orbitGroup, planets, relativeOrbitGroup)

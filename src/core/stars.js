@@ -157,7 +157,7 @@ class StarManager {
         size = Math.min(size, 8.0);
         sizes.push(size);
 
-        const [id, name, bayer, flam, hip, hd, spect] = metaData[i];
+        const [id, name, bayer, flam, hip, hd, spect, con] = metaData[i];
 
         // Coordinate align: x->x, y->z, z->-y to match Planets (Y-up is North)
         const x = xRaw * SCALE;
@@ -186,6 +186,7 @@ class StarManager {
           hip,
           hd,
           spectralType: spect || 'Unknown',
+          constellation: con, // Added
           luminosity: lum,
           radius: rad,
           mass: mass,
@@ -492,5 +493,77 @@ export async function createAsterisms(zodiacGroup, asterismsGroup, starsData) {
     Logger.log(`Created ${zodiacCount} zodiacs and ${otherCount} other asterisms.`);
   } catch (err) {
     Logger.error('Error creating asterisms', err);
+  }
+}
+
+export async function createConstellations(group) {
+  try {
+    const response = await fetch(`${import.meta.env.BASE_URL}assets/constellations.bounds.geojson`);
+    if (!response.ok) throw new Error('Failed to fetch constellation boundaries');
+    
+    const json = await response.json();
+
+    const material = new THREE.LineBasicMaterial({
+      color: 0x445566, // Subtle slate blue/grey
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false, // Don't block stars
+    });
+
+    const RADIUS = 10000000; // 10M units (1000pc approx) - Push behind most visible stars
+
+    json.features.forEach((feature) => {
+      if (!feature.geometry) return;
+
+      const type = feature.geometry.type;
+      const allRings = [];
+
+      if (type === 'Polygon') {
+        // [ [ [ra, dec], ... ] ]
+        allRings.push(...feature.geometry.coordinates);
+      } else if (type === 'MultiPolygon') {
+        // [ [ [ [ra, dec], ... ] ], ... ]
+        feature.geometry.coordinates.forEach(polygon => {
+          allRings.push(...polygon);
+        });
+      }
+
+      allRings.forEach((ring) => {
+        const points = [];
+        ring.forEach(([ra, dec]) => {
+          // RA is usually 0-360 or 0-24h (GeoJSON usually decimal degrees 0-360 or -180 to 180)
+          // Dec is -90 to 90
+          
+          // GeoJSON use [long, lat] -> [RA, Dec]
+          // Ideally RA increases Eastward. 
+          // 3D conversion:
+          const raRad = THREE.MathUtils.degToRad(ra);
+          const decRad = THREE.MathUtils.degToRad(dec);
+
+          // Standard Celestial (Z=North, X=Vernal)
+          // x = r * cos(dec) * cos(ra)
+          // y = r * cos(dec) * sin(ra)
+          // z = r * sin(dec)
+          const xRaw = RADIUS * Math.cos(decRad) * Math.cos(raRad);
+          const yRaw = RADIUS * Math.cos(decRad) * Math.sin(raRad);
+          const zRaw = RADIUS * Math.sin(decRad);
+
+          // Swizzle to Scene (Y=North, X=Vernal, Z=-RA 6h)
+          // Scene X = xRaw
+          // Scene Y = zRaw
+          // Scene Z = -yRaw
+          points.push(new THREE.Vector3(xRaw, zRaw, -yRaw));
+        });
+
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.Line(geometry, material);
+        line.userData = { type: 'constellation', id: feature.id || feature.properties?.id };
+        group.add(line);
+      });
+    });
+
+    Logger.log('Created constellation boundaries from GeoJSON');
+  } catch (err) {
+    Logger.error('Failed to load constellations', err);
   }
 }
