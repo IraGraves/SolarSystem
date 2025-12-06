@@ -25,8 +25,9 @@ export function setupTimeFolder(_gui, uiState, config) {
   // Create Time Window
   const timeWindowObj = windowManager.createWindow('time-window', 'Time & Speed', {
     x: 20,
-    y: window.innerHeight - 280, // Position lower left, aligned with dock margin
+    y: window.innerHeight - 280, // Fallback if snap fails, but handled by manager now
     width: '250px',
+    snap: { x: 'left', y: 'bottom' },
     onClose: () => {
       // Optional: toggle dock state
     },

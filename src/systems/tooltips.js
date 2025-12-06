@@ -386,7 +386,7 @@ function getObjectData(mesh, planets, sun) {
     if (p.moons) {
       for (const m of p.moons) {
         if (m.mesh === mesh || m.mesh === mesh.parent) {
-          return { type: 'moon', data: m.data };
+          return { type: 'moon', data: m.data, parentName: p.data.name };
         }
       }
     }
@@ -595,7 +595,7 @@ function formatSunTooltip() {
     { label: 'Radius', value: '696,340 km (109 x Earth)' },
     { label: 'Mass', value: '1.989 × 10³⁰ kg (333,000 x Earth)' },
     { label: 'Density', value: '1.41 g/cm³' },
-    { label: 'Surface Gravity', value: '274 m/s² (28 g)' },
+    { label: 'Surface Gravity', value: '28 g' },
     { label: 'Surface Temp', value: '5,500°C' },
     { label: 'Core Temp', value: '15,000,000°C' },
     { label: 'Rotation', value: '~27 days (Differential)' },
@@ -606,6 +606,50 @@ function formatSunTooltip() {
   const liveSection = liveData ? formatLiveDataSection(liveData) : null;
 
   return buildTooltip('Sun', fields, liveSection);
+}
+
+/**
+ * Formats a number in scientific notation using unicode superscripts
+ * e.g. 1.23 x 10⁵
+ * Strips utility zeros from mantissa.
+ * @param {number} value - The value to format
+ * @param {number} precision - Decimal places for the coefficient
+ * @returns {string} Formatted string
+ */
+function formatScientific(value, precision = 2) {
+  if (!value) return '0';
+
+  // Get exponential string e.g. "1.23e+5"
+  const expStr = value.toExponential(precision);
+  const [coeffStr, exponentStr] = expStr.split('e');
+
+  // Clean coefficient: parseFloat removes trailing zeros e.g. "3.00" -> 3
+  const coeff = parseFloat(coeffStr);
+
+  // Convert exponent to superscripts
+  const exponent = parseInt(exponentStr);
+  const superscripts = {
+    0: '⁰',
+    1: '¹',
+    2: '²',
+    3: '³',
+    4: '⁴',
+    5: '⁵',
+    6: '⁶',
+    7: '⁷',
+    8: '⁸',
+    9: '⁹',
+    '-': '⁻',
+    '+': '',
+  };
+
+  const exponentFormatted = exponent
+    .toString()
+    .split('')
+    .map((char) => superscripts[char] || char)
+    .join('');
+
+  return `${coeff} × 10${exponentFormatted}`;
 }
 
 /**
@@ -631,16 +675,47 @@ function formatDecimal(value) {
 }
 
 /**
+ * Formats gravity value to 'g' units
+ * @param {string|number} value - Gravity value
+ * @returns {string} Formatted string
+ */
+function formatGravity(value) {
+  if (!value) return 'N/A';
+  if (typeof value === 'string') {
+    // If it already has units, just return it (assuming manual data is correct)
+    // Most planet data is already like "0.38 g"
+    return value;
+  }
+  if (typeof value === 'number') {
+    // Assume m/s² if number (standard for moon data)
+    // 1 g = 9.807 m/s²
+    const gVal = value / 9.807;
+    return `${gVal.toFixed(2)} g`;
+  }
+  return value;
+}
+
+/**
  * Formats tooltip for a planet
  * @param {Object} data - Planet data object
  * @returns {string} HTML string
  */
 function formatPlanetTooltip(data) {
-  const fields = [{ label: 'Type', value: data.type === 'dwarf' ? 'Dwarf Planet' : 'Planet' }];
+  let typeStr = 'Planet';
+  if (data.type === 'dwarf') {
+    typeStr = 'Dwarf Planet';
+  } else if (data.category) {
+    typeStr = `Planet (${data.category})`;
+  }
+
+  const fields = [{ label: 'Type', value: typeStr }];
 
   // Calculate Radius in km (1 Earth Radius = 6371 km)
   const radiusKm = data.radius * 6371;
-  const radiusStr = `${formatDecimal(radiusKm)} km (${formatDecimal(data.radius)} x Earth)`;
+  let radiusStr = `${formatDecimal(radiusKm)} km`;
+  if (data.name !== 'Earth') {
+    radiusStr += ` (${formatDecimal(data.radius)} x Earth)`;
+  }
 
   // Calculate Mass in Earths (1 Earth Mass = 5.97e24 kg)
   // Check if mass is a number (it should be now)
@@ -648,15 +723,18 @@ function formatPlanetTooltip(data) {
   if (typeof data.details.mass === 'number') {
     const earthMass = 5.97e24;
     const massInEarths = data.details.mass / earthMass;
-    const massInKg = data.details.mass.toExponential(2).replace('e+', ' × 10^');
+    const massInKg = formatScientific(data.details.mass);
 
-    // For small masses, showing "0.00 x Earth" is not useful, but we can verify.
-    let relativeStr = `${formatDecimal(massInEarths)} x Earth`;
-    if (massInEarths < 0.01) {
-      relativeStr = `${massInEarths.toExponential(2)} x Earth`;
+    massStr = `${massInKg} kg`;
+
+    if (data.name !== 'Earth') {
+      // For small masses, showing "0.00 x Earth" is not useful, but we can verify.
+      let relativeStr = `${formatDecimal(massInEarths)} x Earth`;
+      if (massInEarths < 0.01) {
+        relativeStr = `${formatScientific(massInEarths)} x Earth`;
+      }
+      massStr += ` (${relativeStr})`;
     }
-
-    massStr = `${massInKg} kg (${relativeStr})`;
   }
 
   // Add detailed fields if available
@@ -666,7 +744,7 @@ function formatPlanetTooltip(data) {
       { label: 'Radius', value: radiusStr },
       { label: 'Mass', value: massStr },
       { label: 'Density', value: data.details.density },
-      { label: 'Gravity', value: data.details.gravity },
+      { label: 'Surface Gravity', value: formatGravity(data.details.gravity) },
       { label: 'Albedo', value: data.details.albedo },
       { label: 'Surface Temp', value: data.details.temp }
     );
@@ -693,13 +771,43 @@ function formatPlanetTooltip(data) {
 /**
  * Formats tooltip for a moon
  * @param {Object} data - Moon data object
+ * @param {string} parentName - Name of the parent planet
  * @returns {string} HTML string
  */
-function formatMoonTooltip(data) {
-  return buildTooltip(data.name, [
+function formatMoonTooltip(data, parentName) {
+  const fields = [
     { label: 'Type', value: 'Moon' },
-    { label: 'Orbital Period', value: `${data.period.toFixed(1)} days` },
-  ]);
+    { label: 'Orbiting', value: parentName || 'Unknown' },
+  ];
+
+  if (data.diameter) {
+    fields.push({ label: 'Diameter', value: `${formatDecimal(data.diameter)} km` });
+  }
+
+  if (data.mass) {
+    const massStr = formatScientific(data.mass);
+    // Convert to earth masses for context? Moon is 0.0123 Earths.
+    // Maybe just kg is fine for now as requested "similar info as planets".
+    // 7.34e22 kg.
+    fields.push({ label: 'Mass', value: `${massStr} kg` });
+  }
+
+  if (data.gravity) {
+    // data.gravity is usually in m/s^2 for these datasets
+    fields.push({ label: 'Surface Gravity', value: formatGravity(data.gravity) });
+  }
+
+  if (data.meanTemp) {
+    fields.push({ label: 'Mean Temp', value: `${data.meanTemp} K` });
+  }
+
+  fields.push({ label: 'Orbital Period', value: `${data.period.toFixed(2)} days` });
+
+  if (data.discoveryYear) {
+    fields.push({ label: 'Discovered', value: `${data.discoveryYear} (${data.discoveredBy})` });
+  }
+
+  return buildTooltip(data.name, fields);
 }
 
 /**
@@ -746,7 +854,7 @@ function formatTooltip(closestObject) {
       case 'planet':
         return formatPlanetTooltip(data);
       case 'moon':
-        return formatMoonTooltip(data);
+        return formatMoonTooltip(data, closestObject.parentName);
       case 'star':
         return formatStarTooltip(data);
       case 'constellation':
@@ -781,7 +889,10 @@ function findClosestObjectScreenSpace(mouseX, mouseY, camera, planets, sun) {
   let closest = null;
   let minDist = 20; // Pixel radius for "generous" hit
 
-  const check = (mesh, type, data) => {
+  /*
+   * Internal helper to check distance and update closest
+   */
+  const check = (mesh, type, data, parentName) => {
     if (!mesh || !mesh.visible) return;
 
     // Get world position
@@ -805,7 +916,7 @@ function findClosestObjectScreenSpace(mouseX, mouseY, camera, planets, sun) {
 
     if (dist < minDist) {
       minDist = dist;
-      closest = { type, data };
+      closest = { type, data, parentName };
     }
   };
 
@@ -817,7 +928,7 @@ function findClosestObjectScreenSpace(mouseX, mouseY, camera, planets, sun) {
     check(p.mesh, 'planet', p.data);
     if (p.moons) {
       p.moons.forEach((m) => {
-        check(m.mesh, 'moon', m.data);
+        check(m.mesh, 'moon', m.data, p.data.name);
       });
     }
   });

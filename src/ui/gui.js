@@ -118,9 +118,9 @@ export function setupGUI(
 
   // --- VISUAL TOOLS WINDOW (Tabbed) ---
   const visualWindow = new TabbedWindow('visual-tools', 'Visual Tools', {
-    x: window.innerWidth - 340,
-    y: window.innerHeight - 340,
     width: '320px',
+    height: 'auto',
+    snap: { x: 'right', y: 'bottom' },
   });
 
   // Helper to create a tab with an embedded lil-gui

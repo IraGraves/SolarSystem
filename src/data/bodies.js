@@ -62,6 +62,7 @@ function getMoonsForPlanet(planetName) {
 export const planetData = [
   {
     name: 'Mercury',
+    category: 'Terrestrial',
     body: 'Mercury',
     radius: 0.38,
     color: 0xaaaaaa,
@@ -85,6 +86,7 @@ export const planetData = [
   },
   {
     name: 'Venus',
+    category: 'Terrestrial',
     body: 'Venus',
     radius: 0.95,
     color: 0xffcc00,
@@ -107,6 +109,7 @@ export const planetData = [
   },
   {
     name: 'Earth',
+    category: 'Terrestrial',
     body: 'Earth',
     radius: 1,
     color: 0x2233ff,
@@ -132,6 +135,7 @@ export const planetData = [
   },
   {
     name: 'Mars',
+    category: 'Terrestrial',
     body: 'Mars',
     radius: 0.53,
     color: 0xff4400,
@@ -155,6 +159,7 @@ export const planetData = [
   },
   {
     name: 'Jupiter',
+    category: 'Gas Giant',
     body: 'Jupiter',
     radius: 11,
     color: 0xd2b48c,
@@ -168,7 +173,7 @@ export const planetData = [
       gravity: '2.53 g',
       albedo: '0.34',
       temp: '-108°C',
-      pressure: 'n/a (Gas Giant)',
+      pressure: 'n/a',
       solarDay: '9h 56m',
       siderealDay: '9h 55m',
       eccentricity: '0.049',
@@ -179,6 +184,7 @@ export const planetData = [
   },
   {
     name: 'Saturn',
+    category: 'Gas Giant',
     body: 'Saturn',
     radius: 9,
     color: 0xeebb88,
@@ -198,7 +204,7 @@ export const planetData = [
       gravity: '1.07 g',
       albedo: '0.34',
       temp: '-139°C',
-      pressure: 'n/a (Gas Giant)',
+      pressure: 'n/a',
       solarDay: '10h 33m',
       siderealDay: '10h 33m',
       eccentricity: '0.057',
@@ -209,6 +215,7 @@ export const planetData = [
   },
   {
     name: 'Uranus',
+    category: 'Ice Giant',
     body: 'Uranus',
     radius: 4,
     color: 0x4fd0e7,
@@ -222,7 +229,7 @@ export const planetData = [
       gravity: '0.89 g',
       albedo: '0.30',
       temp: '-197°C',
-      pressure: 'n/a (Gas Giant)',
+      pressure: 'n/a',
       solarDay: '17h 14m',
       siderealDay: '17h 14m',
       eccentricity: '0.046',
@@ -233,6 +240,7 @@ export const planetData = [
   },
   {
     name: 'Neptune',
+    category: 'Ice Giant',
     body: 'Neptune',
     radius: 3.9,
     color: 0x4b70dd,

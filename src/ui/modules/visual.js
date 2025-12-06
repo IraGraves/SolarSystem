@@ -944,7 +944,6 @@ export function setupMagneticFieldsControlsCustom(
 
     list.appendChild(el);
   });
-
   container.appendChild(list);
 }
 

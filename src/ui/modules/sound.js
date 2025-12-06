@@ -19,7 +19,8 @@ export function setupMusicWindow() {
   const win = windowManager.createWindow('music-window', 'Music', {
     width: '240px',
     x: 290, // Right of Time Window (20px + 250px width + 20px gap)
-    y: window.innerHeight - 280, // Align with Time Window
+    y: window.innerHeight - 280, // Fallback
+    snap: { y: 'bottom' }, // Snap to bottom, but keep manual X
     onClose: () => {
       // Optional: Update UI state if needed, but windowManager handles display:none
     },
@@ -167,9 +168,17 @@ export function setupMusicWindow() {
   const padding = 20;
   // win.x = window.innerWidth / 2 + 160;
   win.x = 290;
-  win.y = window.innerHeight - height - padding;
 
-  win.element.style.transform = `translate3d(${win.x}px, ${win.y}px, 0)`;
+  // Let WindowManager handle Y snap
+  // win.y = window.innerHeight - height - padding;
+
+  // Manual transform update if we want to ensure it or rely on manager
+  // Manager sets it initially, but here we might override if we set x/y manually again?
+  // We passed x/y in createWindow, so Manager set it.
+  // But Manager's snap logic runs on resize. Initial snap logic in createWindow should handle it if passed.
+  // However, we just passed options.snap.
+
+  // win.element.style.transform = ... (removed manual override)
 
   // Initially hide
   windowManager.hideWindow('music-window');
