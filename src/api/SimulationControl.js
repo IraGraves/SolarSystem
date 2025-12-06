@@ -11,7 +11,7 @@ import {
   updateOrbitsVisibility,
   updatePlanetVisibility,
   updateReferencePlane,
-  updateStarBrightness,
+
   updateSunVisibility,
   updateZodiacSignsVisibility,
 } from '../ui/modules/visual.js';
@@ -142,7 +142,10 @@ export class SimulationControl {
 
   setStarBrightness(val) {
     config.starBrightness = Math.max(0, Math.min(1, val));
-    updateStarBrightness(config.starBrightness, this.starsRef);
+    const starsGroup = this.starsRef.value;
+    if (starsGroup && starsGroup.userData.manager) {
+        starsGroup.userData.manager.setBrightness(config.starBrightness);
+    }
   }
 
   toggleOrbits(visible) {

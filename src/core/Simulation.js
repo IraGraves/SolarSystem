@@ -179,7 +179,8 @@ export class Simulation {
         .then(({ stars, rawData }) => {
           if (stars) {
             this.starsRef.value = stars;
-            stars.material.opacity = (config.starBrightness / 0.6) * 0.3;
+            this.starsRef.value = stars;
+            // Opacity now handled by StarManager internally based on config
             createConstellations(zodiacGroup, constellationsGroup, rawData);
             alignZodiacSigns(zodiacSignsGroup, rawData);
           }

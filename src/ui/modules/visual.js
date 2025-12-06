@@ -46,42 +46,8 @@ export function updateReferencePlane(val, universeGroup) {
   }
 }
 
-export function updateStarBrightness(val, starsRef) {
-  const stars = starsRef.value;
-  if (stars?.material) {
-    // Piecewise logic for better control:
-    // 0.0 - 0.6: Fine Opacity Control (0.0 -> 0.3) - Realistic Range
-    // 0.6 - 0.8: Rapid Opacity Ramp (0.3 -> 1.0)
-    // 0.8 - 1.0: Intensity Boost (1.0 -> 100.0) - Turbo Range
 
-    let opacity = 1.0;
-    let intensity = 1.0;
-
-    if (val <= 0.6) {
-      opacity = (val / 0.6) * 0.3;
-    } else if (val <= 0.8) {
-      opacity = 0.3 + ((val - 0.6) / 0.2) * 0.7;
-    } else {
-      opacity = 1.0;
-      // Exponential boost from 1.0 to 100.0
-      // (val - 0.8) / 0.2 goes 0 -> 1
-      const t = (val - 0.8) / 0.2;
-      intensity = 1.0 + t ** 3 * 99.0;
-    }
-
-    stars.material.opacity = opacity;
-    stars.material.color.setScalar(intensity);
-
-    // Subtle size increase only at very high settings (Turbo Range)
-    if (val > 0.8) {
-      const t = (val - 0.8) / 0.2;
-      stars.material.size = 1.0 + t * 0.2; // Max 1.2x
-    } else {
-      stars.material.size = 1.0;
-    }
-  }
-}
-
+// Removed updateReferencePlane export conflict if present, but user asked for visual.js update.
 import { updateCoordinateSystem } from '../../systems/coordinates.js';
 import { updateRelativeOrbits } from '../../systems/relativeOrbits.js';
 
@@ -123,12 +89,37 @@ export function setupVisualFolder(
   const starSlider = visualFolder
     .add(config, 'starBrightness', 0.0, 1.0)
     .name('Star Brightness')
-    .onChange((val) => updateStarBrightness(val, starsRef));
+    .onChange((val) => {
+        const starsGroup = starsRef.value;
+        if (starsGroup && starsGroup.userData.manager) {
+            starsGroup.userData.manager.setBrightness(val);
+        }
+    });
   starSlider.domElement.classList.add('hide-value');
   starSlider.domElement.classList.add('full-width');
 
-  // Initialize star brightness state
-  updateStarBrightness(config.starBrightness, starsRef);
+  // Magnitude Limit (Star Count)
+  const magSlider = visualFolder
+    .add(config, 'magnitudeLimit', 2.0, 13.0)
+    .name('Magnitude Limit')
+    .step(0.1)
+    .onChange((val) => {
+        const stars = starsRef.value;
+        if (stars && stars.userData.manager) {
+            const manager = stars.userData.manager;
+            // Coarse chunk loading based on magnitude thresholds
+            // Chunk 0: <= 6.5 (Always loaded)
+            // Chunk 1: <= 8.0
+            // Chunk 2: > 8.0 (Deep space)
+            
+            if (val > 6.5) manager.loadChunk(1);
+            if (val > 8.0) manager.loadChunk(2);
+            
+            // Pass 'val' to shader to clip stars precisely
+            manager.setMagnitudeLimit(val);
+        }
+    });
+  magSlider.domElement.classList.add('full-width');
 
   const gammaSlider = visualFolder
     .add(config, 'gamma', 0.1, 5.0)

@@ -35,9 +35,10 @@
  */
 import * as Astronomy from 'astronomy-engine';
 import * as THREE from 'three';
+import { Logger } from '../utils/logger.js';
 import { config } from '../config.js';
 import { windowManager } from '../ui/WindowManager.js';
-import { Logger } from '../utils/logger.js';
+
 
 const SCREEN_HIT_RADIUS = 10; // Pixels on screen for hit detection
 
@@ -151,72 +152,66 @@ export function setupTooltipSystem(
     }
 
     // 2. Check Stars (only if no 3D object found)
-    // If we already hit a planet/sun, we skip stars to avoid confusion
     if (!closestObject) {
-      const stars = starsRef.value;
-      if (stars) {
-        const starData = stars.userData.starData;
-        const octree = stars.userData.octree;
+      const starsGroup = starsRef.value;
+      if (starsGroup) {
+        // StarManager attached to userData
+        const manager = starsGroup.userData.manager;
+        const starData = starsGroup.userData.starData;
+        
+        let octrees = [];
+        if (manager) {
+            octrees = manager.getOctrees();
+        } else if (starsGroup.userData.octree) {
+            // Legacy/Fallback support
+            octrees = [starsGroup.userData.octree];
+        }
 
-        // Optimization: Only check stars if we are not hovering a planet
-        // We iterate through all stars - this can be optimized with a spatial index if needed
-        // but for ~5000 stars it's usually fine.
-
-        // We need to find the closest star in screen space
-        const STAR_HIT_RADIUS = 15; // Reduced radius to avoid sticky feeling
+        const STAR_HIT_RADIUS = 15;
         let minScreenDist = STAR_HIT_RADIUS;
 
-        // Use Octree if available
+        // Collect candidates from ALL octrees
         let candidates = [];
-        if (octree) {
-          raycaster.setFromCamera(mouse, camera);
+        
+        if (octrees.length > 0) {
+           raycaster.setFromCamera(mouse, camera);
+           // Assume starsGroup is the parent for all chunks, so matrixWorld is valid for all
+           const inverseMatrix = new THREE.Matrix4().copy(starsGroup.matrixWorld).invert();
+           const localRay = raycaster.ray.clone().applyMatrix4(inverseMatrix);
 
-          // Transform ray to local space of the stars object
-          // The Octree is built in local space, but raycaster is in world space
-          const inverseMatrix = new THREE.Matrix4().copy(stars.matrixWorld).invert();
-          const localRay = raycaster.ray.clone().applyMatrix4(inverseMatrix);
-
-          // Use a threshold of 500 to account for perspective "cone" of 15px at distance 10000
-          candidates = octree.queryRay(localRay, 500);
-        } else {
-          // Fallback to all stars if octree not ready
-          candidates = starData.map((d, i) => ({ data: d, index: i }));
+           octrees.forEach(octree => {
+               const results = octree.queryRay(localRay, 500);
+               candidates.push(...results);
+           });
+        } else if (starData) {
+            // Fallback (slow)
+             candidates = starData.map((d, i) => ({ data: d, index: i }));
         }
 
         for (const candidate of candidates) {
-          // If candidate comes from Octree, it has { position, data, index }
-          // If fallback, we constructed it similarly (but position is not pre-calculated in fallback object above, so we'd need to handle that if we cared about fallback perf, but we don't)
-
-          // Actually, let's just use the data we have.
-          // Octree stores { position: Vector3, data: starData, index: int }
-
           const star = candidate.data;
-          // We need position. If from Octree, we have it.
-          // If not, we need to reconstruct it or read from buffer.
+          
+          // Visibility check:
+          // If star magnitude overrides the limit, it shouldn't be selectable
+          if (star.mag !== undefined && config.magnitudeLimit !== undefined) {
+             if (star.mag > config.magnitudeLimit) continue;
+          }
 
           let starPos;
           if (candidate.position) {
             starPos = candidate.position.clone();
           } else {
-            // Fallback reconstruction (slow path)
-            // This matches the logic in stars.js
             const SCALE = 10000;
             starPos = new THREE.Vector3(star.z * SCALE, star.x * SCALE, star.y * SCALE);
           }
 
-          starPos.applyMatrix4(stars.matrixWorld);
-
-          // Project star position to screen space
-          // This converts 3D world coordinates to 2D screen coordinates
+          starPos.applyMatrix4(starsGroup.matrixWorld);
           const projected = starPos.clone().project(camera);
 
-          // Check if star is in front of camera (between near and far planes)
           if (projected.z < 1 && projected.z > -1) {
-            // Convert normalized coordinates (-1 to 1) to pixel coordinates
             const screenX = (projected.x * 0.5 + 0.5) * window.innerWidth;
             const screenY = (-(projected.y * 0.5) + 0.5) * window.innerHeight;
 
-            // Calculate distance from mouse to star in screen-space (pixels)
             const dx = mouseX - screenX;
             const dy = mouseY - screenY;
             const dist = Math.sqrt(dx * dx + dy * dy);
@@ -829,21 +824,39 @@ function formatStarTooltip(data) {
   const distance = data.distance ? (data.distance * 3.26156).toFixed(1) : 'N/A';
   const luminosity = data.luminosity ? data.luminosity.toFixed(2) : 'N/A';
   const name = data.name || `HD ${data.id}`;
+  
+  // Use explicit spectral type if available, else derive? (Data now has it)
   const type = data.spectralType || 'Unknown';
-
+  
   const fields = [
     { label: 'Distance', value: `${distance} LY` },
     { label: 'Type', value: type },
     { label: 'Luminosity', value: `${luminosity} L☉` },
   ];
 
-  // Calculate Apparent Magnitude
-  // M = 4.83 - 2.5 * log10(L)
-  // m = M + 5 * (log10(d) - 1)  (where d is in parsecs)
-  if (data.luminosity && data.distance) {
+  if (data.temperature) {
+     fields.push({ label: 'Temp', value: `${Math.round(data.temperature)} K` });
+  }
+
+  if (data.mass) {
+      fields.push({ label: 'Mass', value: `${data.mass.toFixed(2)} M☉` });
+  }
+
+  if (data.mass) {
+      fields.push({ label: 'Mass', value: `${data.mass.toFixed(2)} M☉` });
+  }
+
+  if (data.radius) {
+      fields.push({ label: 'Radius', value: `${data.radius.toFixed(2)} R☉` });
+  }
+
+  // Use pre-calculated magnitude from expensive offline processing if available
+  if (data.mag !== undefined) {
+      fields.push({ label: 'Apparent Mag', value: data.mag.toFixed(2) });
+  } else if (data.luminosity && data.distance) {
     const M = 4.83 - 2.5 * Math.log10(data.luminosity);
     const m = M + 5 * (Math.log10(data.distance) - 1);
-    fields.push({ label: 'Apparent Mag', value: m.toFixed(2) });
+    fields.push({ label: 'Apparent Mag (Est)', value: m.toFixed(2) });
   }
 
   if (data.hip) {
@@ -853,7 +866,7 @@ function formatStarTooltip(data) {
     fields.push({ label: 'HD ID', value: data.hd });
   }
 
-  // Fallback if no standard IDs
+  // If no specific IDs, show internal or generic
   if (!data.hip && !data.hd) {
     fields.push({ label: 'Catalog ID', value: data.id });
   }
