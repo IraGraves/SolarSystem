@@ -1,3 +1,23 @@
+/**
+ * @file rings.js
+ * @description Planetary ring geometry creation with procedural Saturn ring texture.
+ *
+ * This file creates ring meshes for planets (currently Saturn) using Three.js RingGeometry.
+ * It includes a high-quality procedural texture generator that accurately represents Saturn's
+ * ring structure including the C, B, and A rings, Cassini Division, and Encke Gap.
+ *
+ * Key features:
+ * - RingGeometry: 128 radial segments for smooth appearance
+ * - Custom UV mapping: Maps radius to texture V-coordinate for proper gradient application
+ * - Procedural Saturn texture: 1024px canvas with gradient stops matching real ring structure
+ * - Ring divisions: C Ring (faint), B Ring (bright), Cassini Division (dark gap), A Ring (moderate), Encke Gap
+ * - Double-sided rendering: Rings visible from both above and below
+ * - Texture fallback: Supports loading external ring textures for other planets
+ * - Orientation: Automatically rotated to lie flat in planet's equatorial plane
+ *
+ * The procedural texture uses carefully calibrated color stops based on Cassini imagery to create
+ * a visually accurate representation of Saturn's complex ring system.
+ */
 import * as THREE from 'three';
 import { textureManager } from '../managers/TextureManager.js';
 

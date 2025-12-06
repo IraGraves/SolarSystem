@@ -1,3 +1,23 @@
+/**
+ * @file scene.js
+ * @description Three.js scene, camera, renderer, and lighting configuration.
+ *
+ * This file sets up the fundamental Three.js rendering infrastructure for the solar system
+ * simulator. It creates the scene with appropriate lighting for astronomical rendering,
+ * configures the camera with extreme near/far ranges, and sets up the WebGL renderer with
+ * logarithmic depth buffer for handling vast distance scales.
+ *
+ * Key features:
+ * - Perspective camera with wide FOV (60°) and extreme near/far planes (1e-5 to 1e12)
+ * - Logarithmic depth buffer for precise rendering across astronomical distances
+ * - ACES Filmic tone mapping for realistic exposure and lighting
+ * - Dual-layer lighting system: Point light for planets, Spot light for Earth/Moon shadows
+ * - Orbit controls with damping for smooth camera manipulation
+ * - Responsive resize handler for window dimension changes
+ *
+ * The dual-layer lighting approach prevents light leaking and allows Earth/Moon to have
+ * realistic shadows while other planets remain illuminated by the point light at the Sun.
+ */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 

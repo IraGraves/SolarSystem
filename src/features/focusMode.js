@@ -1,3 +1,24 @@
+/**
+ * @file focusMode.js
+ * @description Camera focus and tracking system for celestial bodies.
+ *
+ * This file implements the focus mode feature, which allows users to double-click on any celestial
+ * body (sun, planet, moon) to smoothly transition the camera to follow that object. The camera
+ * maintains a fixed distance from the object and tracks its movement through space.
+ *
+ * Key features:
+ * - Double-click detection with screen-space hit testing (15px radius)
+ * - Smooth camera animation using ease-in-out interpolation (2s duration)
+ * - Dynamic distance calculation based on object's visual size (5x radius multiplier)
+ * - Automatic high-resolution geometry and texture loading when focused
+ * - Frame-by-frame position tracking to follow moving objects
+ * - ESC key or empty-space click to exit focus mode
+ * - On-screen focus notification system
+ *
+ * The focus mode temporarily disables orbit controls during animation, then re-enables them for
+ * manual adjustment while maintaining the follow behavior. High-resolution meshes (128x128 sphere)
+ * are swapped in for better visual quality when zoomed in.
+ */
 import * as THREE from 'three';
 import { config } from '../config.js';
 import { textureManager } from '../managers/TextureManager.js';

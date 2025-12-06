@@ -1,3 +1,22 @@
+/**
+ * @file scale.js
+ * @description Scale controls for sun and planet sizes with preset modes (Realistic, Artistic, Custom).
+ *
+ * This file provides sliders for adjusting the visual scale of celestial bodies. It uses proxy objects
+ * to present "real scale" multipliers (e.g., 500x Earth) to the user while internally managing smaller
+ * values for performance. The system includes automatic preset switching when manual adjustments are made.
+ *
+ * Key features:
+ * - Scale presets: Realistic (1x/1x), Artistic (20x/500x), Custom (user-defined)
+ * - Sun scale: Linear slider from 1x to 70x realtime size
+ * - Planet scale: Cubic-mapped slider from 1x to 2500x realtime size (smoother control)
+ * - Auto-switch to Custom: Manual slider adjustments trigger preset change
+ * - Magnetic field scale sync: Updates field sizes when body scales change
+ * - Per-body scaling: All planets and moons scale uniformly
+ *
+ * Artistic preset (default) provides visually pleasing proportions: 20x sun, 500x planets.
+ * The cubic mapping for planets allows fine control at low values and coarse at high values.
+ */
 import { config, REAL_PLANET_SCALE_FACTOR, REAL_SUN_SCALE_FACTOR } from '../../config.js';
 import { addValueDisplay } from './utils.js';
 import { updateMagneticFieldScales, updateSunMagneticFieldScale } from './visual.js';

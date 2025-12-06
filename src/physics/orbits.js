@@ -1,4 +1,25 @@
 /**
+ * @file orbits.js
+ * @description Pure physics functions for Keplerian orbital mechanics calculations.
+ *
+ * This file provides framework-agnostic mathematical functions for computing orbital positions
+ * of celestial bodies using classical two-body orbital mechanics. It solves Kepler's Equation
+ * to calculate the position of a body in its orbit at any given time, based on its orbital
+ * elements (semi-major axis, eccentricity, inclination, etc.).
+ *
+ * Key responsibilities:
+ * - Solving Kepler's Equation using Newton-Raphson iteration
+ * - Converting orbital elements to 3D Cartesian coordinates
+ * - Calculating mean motion and mean anomaly from epoch
+ * - Applying orbital element rotations (RAAN, argument of periapsis, inclination)
+ *
+ * Used for bodies not supported by Astronomy Engine (e.g., Ceres, Haumea, Makemake, Eris).
+ * All calculations are in standard astronomical units (AU for distance, days for time).
+ *
+ * References: Murray & Dermott, "Solar System Dynamics" (1999), Chapter 2
+ */
+
+/**
  * Solves Kepler's Equation for Eccentric Anomaly E
  * @param {number} M - Mean anomaly in radians
  * @param {number} e - Eccentricity

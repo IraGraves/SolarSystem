@@ -1,6 +1,20 @@
 /**
  * @file Simulation.js
- * @description Core simulation class that orchestrates the entire application.
+ * @description Main simulation class that orchestrates the entire White Rabbit application.
+ *
+ * This class serves as the core orchestrator, managing the initialization, animation loop,
+ * and coordination of all simulation subsystems. It instantiates the Three.js scene, creates
+ * celestial bodies, sets up the GUI, and manages the frame-by-frame update cycle.
+ *
+ * Key responsibilities:
+ * - Initializing the Three.js scene, camera, renderer, and controls
+ * - Creating planets, moons, stars, and other celestial objects
+ * - Setting up GUI, tooltips, focus mode, and mission trajectories
+ * - Running the main animation loop and updating all subsystems
+ * - Managing magnetic field animations and coordinate system transformations
+ * - Exposing the SimulationControl API for programmatic access
+ *
+ * The simulation uses a class-based architecture for better encapsulation and state management.
  */
 
 import * as THREE from 'three';

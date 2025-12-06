@@ -1,7 +1,7 @@
 {
   "name": "white-rabbit",
   "version": "1.0.0",
-  "description": "Just another solar system simulator - follow the white rabbit!",
+  "description": "Interactive 3D solar system simulator with accurate celestial mechanics and real star positions",
   "main": "src/main.js",
   "scripts": {
     "dev": "vite",
@@ -13,9 +13,28 @@
     "format": "biome format --write .",
     "check": "biome check --write ."
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "solar-system",
+    "simulator",
+    "astronomy",
+    "three.js",
+    "space",
+    "planets",
+    "celestial-mechanics",
+    "3d",
+    "visualization",
+    "astronomy-engine"
+  ],
+  "author": "IraGraves",
+  "homepage": "https://iragraves.github.io/white-rabbit/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IraGraves/white-rabbit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IraGraves/white-rabbit/issues"
+  },
+  "license": "GPL-3.0",
   "type": "module",
   "dependencies": {
     "astronomy-engine": "^2.1.19",

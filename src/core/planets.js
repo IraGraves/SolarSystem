@@ -1,3 +1,21 @@
+/**
+ * @file planets.js
+ * @description Planet and moon creation, positioning, and rotation management.
+ *
+ * This file handles Three.js scene graph manipulation for all celestial bodies (planets, dwarf planets,
+ * moons, and the Sun). It integrates with the Astronomy Engine for accurate heliocentric positions
+ * and implements Keplerian orbit calculations for bodies not supported by the library.
+ *
+ * Key responsibilities:
+ * - Creating planet and moon meshes with textures, rings, and atmospheres
+ * - Positioning bodies using Astronomy Engine's HelioVector or custom Keplerian elements
+ * - Applying realistic rotation periods and axial tilts
+ * - Managing Earth's cloud layer and shadow light targeting
+ * - Creating and updating orbital path visualization
+ *
+ * Coordinate system: Equatorial (J2000 epoch) from Astronomy Engine, mapped to Three.js space
+ * where Y is up, X is right, and Z is forward/back.
+ */
 import * as Astronomy from 'astronomy-engine';
 import * as THREE from 'three';
 import { AU_TO_SCENE, config } from '../config.js';

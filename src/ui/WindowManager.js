@@ -1,6 +1,22 @@
 /**
- * WindowManager.js
- * Manages floating windows in the application.
+ * @file WindowManager.js
+ * @description Central window management system for creating and controlling floating UI windows.
+ *
+ * This singleton class manages all floating windows in the application, providing a unified API for
+ * window creation, visibility toggling, z-index ordering, and drag behavior. Windows snap to screen edges
+ * for better organization and can be dragged from anywhere except interactive controls.
+ *
+ * Key features:
+ * - Window creation with customizable position, size, and callbacks
+ * - Z-index management for focus and layering (auto-incrementing from 1000)
+ * - Drag-to-move with 20px snap zones at screen edges
+ * - Smart drag detection: Excludes buttons, inputs, and time controls
+ * - Visibility management (show/hide/toggle)
+ * - Close button with optional onClose callback
+ * - transform3d positioning for GPU acceleration
+ *
+ * Used by Time & Speed window, Info Window, and tabbed Visual Tools window.
+ * The system maintains a Map of all windows for efficient lookups and state management.
  */
 export class WindowManager {
   constructor() {

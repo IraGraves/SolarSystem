@@ -1,6 +1,22 @@
 /**
- * TabbedWindow.js
- * A window that supports multiple tabs and drag-and-drop docking/undocking.
+ * @file TabbedWindow.js
+ * @description Tabbed window component with drag-and-drop tab docking/undocking functionality.
+ *
+ * This file implements a reusable tabbed window system that allows users to organize related UI
+ * content into tabs within a single window. Tabs can be dragged out to create standalone windows
+ * or docked back into the tabbed interface via drag-and-drop gestures.
+ *
+ * Key features:
+ * -  Multiple tabs with icons and titles in a single window
+ * - Drag-and-drop tab detachment: Mouse drag threshold (10px) before creating new window
+ * - Auto-docking: Dragging a standalone window over the tab header re-docks it
+ * - Ordered tab list: Maintains stable order (Objects, Constellations, Orbits, Magnetic)
+ * - Active tab selection with visual highlighting
+ * - Smooth scroll to active tab for better UX with many tabs
+ * - Window manager integration for unified window lifecycle
+ *
+ * Used by the Visual Tools window to organize multiple visualization control panels.
+ * The system prevents orphaning the last tab (cannot drag if only one tab exists).
  */
 import { windowManager } from '../WindowManager.js';
 

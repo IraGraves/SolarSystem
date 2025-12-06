@@ -1,3 +1,20 @@
+/**
+ * @file orbits.js (systems)
+ * @description Orbit line creation for planets using Astronomy Engine or Keplerian elements.
+ *
+ * This file generates visual orbit paths for planets and dwarf planets. It samples positions over
+ * the body's orbital period to create smooth elliptical Three.js LineLoop geometries.
+ *
+ * Key features:
+ * - 360-step sampling: Creates smooth curves even for highly elliptical orbits
+ * - Astronomy Engine integration: Uses HelioVector for major planets (accurate ephemeris)
+ * - Keplerian fallback: Uses custom orbit calculator for dwarf planets (Ceres, Haumea, etc.)
+ * - Dynamic coloring: Applies planet-specific colors or neutral gray based on config
+ * - Opacity adjustment: Colored orbits are more opaque (0.8) than monochrome (0.5)
+ *
+ * Orbit lines are added to the orbitGroup for visibility management. The color mode is controlled
+ * by `config.showPlanetColors` and `config.showDwarfPlanetColors` settings.
+ */
 import * as Astronomy from 'astronomy-engine';
 import * as THREE from 'three';
 import { AU_TO_SCENE, config } from '../config.js';

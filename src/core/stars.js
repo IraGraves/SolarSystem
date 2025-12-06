@@ -1,3 +1,25 @@
+/**
+ * @file stars.js
+ * @description Starfield generation, constellation rendering, and stellar catalog management.
+ *
+ * This file creates the background starfield using real astronomical data with accurate star
+ * positions, colors, and brightness. It loads binary star data for performance, implements an
+ * Octree spatial index for efficient star queries (used in tooltip hit detection), and renders
+ * constellation lines for both zodiac and other astronomical constellations.
+ *
+ * Key responsibilities:
+ * - Loading star catalog from binary format (positions, colors, magnitudes)
+ * - Converting equatorial coordinates (RA/Dec) to Three.js 3D space
+ * - Calculating star sizes based on apparent magnitude and distance
+ * - Building Octree spatial index for O(log n) nearest star queries
+ * - Rendering 12 zodiac constellations and all 88 astronomical constellations
+ * - Creating custom star textures with radial gradients for visual appeal
+ * - Inferring spectral types (O, B, A, F, G, K, M) from RGB color data
+ *
+ * The starfield uses a custom shader to apply per-star sizing based on brightness,
+ * creating a realistic distribution of bright and faint stars. Constellation lines are
+ * drawn by connecting stars based on IAU constellation boundary data.
+ */
 import * as THREE from 'three';
 import { Logger } from '../utils/logger.js';
 import { Octree } from '../utils/Octree.js';

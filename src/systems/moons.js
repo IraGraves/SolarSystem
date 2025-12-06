@@ -1,3 +1,34 @@
+/**
+ * @file moons.js
+ * @description Moon creation, position calculation, and intelligent orbit scaling system.
+ *
+ * This file manages the creation and updating of all natural satellites in the solar system.
+ * It supports three distinct calculation methods based on moon type and implements an advanced
+ * orbit scaling system to prevent visual overlap while maintaining relative scale relationships.
+ *
+ * Moon position calculation strategies:
+ * - 'real': Earth's Moon using Astronomy.GeoVector for precise orbital mechanics
+ * - 'jovian': Jupiter's Galilean moons using Astronomy.JupiterMoons() ephemeris
+ * - 'simple': Simplified circular orbits for Saturn, Uranus, and Neptune moons
+ *
+ * Adaptive orbit scaling features:
+ * - Compound scaling: Combines planetScale ×500 artistic multiplier for visual coherence
+ * - Lower bound: 1.1× parent planet radius to prevent moons appearing inside planets
+ * - Upper bound: Half distance to nearest neighboring planet to prevent overlap
+ * - Linear remapping: Proportionally compresses/expands moon system if exceeding bounds
+ * - Dynamic updates: Recalculates orbit positions based on current simulation date
+ *
+ * Additional features:
+ * - Tidal locking: Rotates moons to always face their parent planet
+ * - Visibility management by size category (largest, major, small)
+ * - Texture loading with progressive quality (lowres → midres → highres)
+ * - Rotation axis visualization
+ * - Shadow/lighting layer management for Earth's Moon
+ * - Periodic orbit line updates for real/jovian moons to track changing positions
+ *
+ * The scaling system ensures moon orbits remain visually distinct and don't overlap with their
+ * parent's neighbors, while still conveying the correct relative scale of the moon system.
+ */
 import * as Astronomy from 'astronomy-engine';
 import * as THREE from 'three';
 import { AU_TO_SCENE, config, REAL_PLANET_SCALE_FACTOR } from '../config.js';

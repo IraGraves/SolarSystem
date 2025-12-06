@@ -1,3 +1,30 @@
+/**
+ * @file missions.js
+ * @description Mission trajectory calculation, waypoint interpolation, and visualization for historic space probes.
+ *
+ * This file dynamically calculates and renders the flight paths of 11 historic space missions using
+ * real launch and encounter dates. It supports three trajectory calculation methods:
+ * 1. Planetary encounters: Uses Astronomy Engine to get accurate body positions at flyby dates
+ * 2. Minor body encounters: Uses custom Keplerian elements for comets/asteroids (67P, Arrokoth)
+ * 3. Deep space milestones: Calculates positions along exit vectors for interstellar missions
+ *
+ * Supported missions:
+ * - Voyager 1 & 2: Grand Tour of outer planets, now in interstellar space
+ * - Pioneer 10 & 11: First to Jupiter/Saturn, now silent in deep space
+ * - Galileo: Venus-Earth-Earth-Gaspra-Earth-Ida-Jupiter tour with orbital insertion
+ * - Cassini: Venus-Venus-Earth-Jupiter-Saturn with 13-year Saturn orbit
+ * - New Horizons: Jupiter-Pluto-Arrokoth flyby sequence
+ * - Parker Solar Probe: Multiple Venus flybys and close solar approaches
+ * - Juno: Earth-Earth-Jupiter with extended mission including moon flybys
+ * - Rosetta: Complex tour to comet 67P with Steins/Lutetia encounters
+ * - Ulysses: Jupiter gravity assist for solar polar orbit
+ *
+ * The trajectories use Catmull-Rom spline interpolation for smooth curves between waypoints,
+ * creating visually realistic arcing paths. Positions are calculated in heliocentric coordinates
+ * and transformed to Three.js scene space.
+ *
+ * References: JPL Horizons System, NASA mission archives
+ */
 import * as Astronomy from 'astronomy-engine';
 import * as THREE from 'three';
 import { AU_TO_SCENE, config } from '../config.js';

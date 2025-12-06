@@ -1,3 +1,27 @@
+/**
+ * @file bodies.js
+ * @description Static data definitions for planets, dwarf planets, and their physical properties.
+ *
+ * This file contains comprehensive data for all major planets (Mercury through Neptune) and dwarf
+ * planets (Ceres, Pluto, Haumea, Makemake, Eris). Each body includes physical properties, orbital
+ * parameters, texture paths, and detailed metadata for the object info display.
+ *
+ * Data structure:
+ * - name: Display name for UI
+ * - body: Astronomy Engine identifier (if supported)
+ * - radius: Radius relative to Earth (Earth = 1.0)
+ * - color: Hex color code fallback before texture loads
+ * - period: Orbital period in days
+ * - texture: Path to surface texture image
+ * - rotationPeriod: Rotation period in hours
+ * - axialTilt: Axial tilt in degrees
+ * - moons: Array of moon objects (imported from moonData.js)
+ * - magneticField: Optional magnetic field configuration (strength, tilt, color)
+ * - details: Physical details for object info window (mass, density, temperature, etc.)
+ * - elements: Keplerian orbital elements for bodies not in Astronomy Engine
+ *
+ * Data sources: NASA JPL, IAU, published scientific literature
+ */
 import { largestMoons, majorMoons, smallMoons } from './moonData.js';
 
 /**

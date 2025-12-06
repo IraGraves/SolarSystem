@@ -1,3 +1,27 @@
+/**
+ * @file visual.js
+ * @description Visual settings controls including coordinate systems, rendering options, and overlay visibility.
+ *
+ * This file provides a comprehensive set of UI controls for adjusting visual presentation and overlays
+ * in the solar system simulator. It manages global visual state through config updates and coordinates
+ * scene transformations for different coordinate systems and reference planes.
+ *
+ * Key responsibilities:
+ * - Reference plane rotation: Equatorial (default) vs Ecliptic (23.44° tilt correction)
+ * - Coordinate system origin: Barycentric, Geocentric, Tychonic, Heliocentric
+ * - Star brightness control: Piecewise mapping (realistic → turbo with 100x intensity boost)
+ * - Gamma/exposure adjustment via tone mapping
+ * - Object info mode: Tooltip vs Window vs Off
+ * - Visibility toggles for all overlay categories (orbits, constellations, axes, etc.)
+ * - Parent-child control relationships: Auto-hide child controls when parent disabled
+ * - Custom tab-based UI builders for Visual Tools window
+ * - Orbit color management (planet/dwarf planet specific colors)
+ * - Moon orbit capping when scaling
+ * - Magnetic field capping when scaling
+ *
+ * The visual module integrates deeply with the GUI system, providing both lil-gui folder-based
+ * controls and custom HTML-based tabbed interfaces for better organization of complex settings.
+ */
 import * as THREE from 'three';
 import { config, REAL_PLANET_SCALE_FACTOR } from '../../config.js';
 

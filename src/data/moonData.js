@@ -1,11 +1,24 @@
 /**
- * Comprehensive moon data for the solar system
- * Organized by size categories: Largest (>2000km), Major (100-2000km), Small (<100km)
+ * @file moonData.js
+ * @description Comprehensive moon data organized by size categories for visibility management.
  *
- * Data sources:
- * - NASA JPL Solar System Dynamics
- * - IAU Minor Planet Center
- * - Published scientific literature
+ * This file contains detailed data for all major moons in the solar system, organized into three
+ * visibility categories: Largest (>2000km diameter), Major (100-2000km), and Small (<100km).
+ * This categorization allows users to toggle moon visibility by size class for performance.
+ *
+ * Moon types:
+ * - 'real': Uses Astronomy Engine (e.g., Earth's Moon via Astronomy.GeoVector)
+ * - 'jovian': Jupiter's moons, uses Astronomy.JupiterMoons()
+ * - 'simple': Simplified circular/elliptical orbits for Saturn, Uranus, Neptune moons
+ *
+ * Each moon includes:
+ * - Physical properties: radius, diameter, mass, gravity, temperature
+ * - Orbital parameters: period, distance (for simple orbits), tidal locking state
+ * - Visual properties: texture path, color, axial tilt
+ * - Discovery information: year, discoverer
+ * - Optional magnetic field data (e.g., Ganymede)
+ *
+ * Data sources: NASA JPL Solar System Dynamics, IAU Minor Planet Center, published literature
  */
 
 // ========================================

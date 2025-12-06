@@ -1,17 +1,19 @@
+/**
+ * @file gui.js
+ * @description Main GUI orchestrator for the White Rabbit solar system simulator.
+ *
+ * This file manages the main menu GUI using lil-gui, coordinates the tabbed Visual Tools window,
+ * and integrates with the WindowManager for floating windows. It serves as the central hub for
+ * all UI setup and updates.
+ *
+ * Key responsibilities:
+ * - Setting up the main menu with all folders (Find, Scale, Visual, Missions, Navigation, etc.)
+ * - Creating the tabbed Visual Tools window (Objects, Asterisms, Orbits, Magnetism, Guides)
+ * - Managing UI state synchronization with the WindowManager
+ * - Providing the updateUI() function for frame-by-frame UI updates
+ */
 import GUI from 'lil-gui';
 import { config, REAL_PLANET_SCALE_FACTOR, REAL_SUN_SCALE_FACTOR } from '../config.js';
-/**
- * Sets up the GUI with Scale, Visual, Time, and Navigation sections
- *
- * @param {Array} planets - Array of planet objects with mesh, moons, etc.
- * @param {THREE.Mesh} sun - The sun mesh
- * @param {THREE.Group} orbitGroup - Group containing planet orbit lines
- * @param {THREE.Group} zodiacGroup - Group containing zodiac constellation lines
- * @param {THREE.Points} stars - The starfield points object
- * @returns {Object} Object containing uiState and control references for updates
- *
- * - Navigation: Help text for camera and focus controls
- */
 import { menuDock } from './MenuDock.js';
 import { setupAboutFolder } from './modules/about.js';
 import { setupEventsFolder } from './modules/events.js';
@@ -21,19 +23,7 @@ import { setupNavigationFolder } from './modules/navigation.js';
 import { setupScaleFolder } from './modules/scale.js';
 import { setupMusicWindow } from './modules/sound.js';
 import { setupSystemUI } from './modules/system.js';
-/**
- * Sets up the GUI with Scale, Visual, Time, and Navigation sections
- *
- * @param {Array} planets - Array of planet objects with mesh, moons, etc.
- * @param {THREE.Mesh} sun - The sun mesh
- * @param {THREE.Group} orbitGroup - Group containing planet orbit lines
- * @param {THREE.Group} zodiacGroup - Group containing zodiac constellation lines
- * @param {THREE.Points} stars - The starfield points object
- * @returns {Object} Object containing uiState and control references for updates
- *
- * - Navigation: Help text for camera and focus controls
- */
-import { TabbedWindow } from './modules/TabbedWindow.js'; // Import TabbedWindow
+import { TabbedWindow } from './modules/TabbedWindow.js';
 import { setupTimeFolder } from './modules/time.js';
 import {
   setupAsterismsControlsCustom,
@@ -143,14 +133,12 @@ export function setupGUI(
     // Handle overload: (id, title, setupFn)
     if (typeof iconOrSetup === 'function') {
       setup = iconOrSetup;
-      icon = ''; // Default or infer?
-      console.warn(`[createCustomTab] Called with 3 args for '${id}'. Icon missing.`);
+      icon = ''; // Default icon
     } else {
       icon = iconOrSetup;
     }
 
     if (typeof setup !== 'function') {
-      console.error(`[createCustomTab] Error: setup is not a function for '${id}'`, setup);
       return;
     }
 
@@ -168,13 +156,9 @@ export function setupGUI(
   createCustomTab('constellations', 'Asterisms', '✨', (container) =>
     setupAsterismsControlsCustom(container, zodiacGroup, constellationsGroup, zodiacSignsGroup)
   );
-  // createGuiTab('constellations', 'Asterisms', (g) => setupConstellationsControls(g, zodiacGroup, constellationsGroup, zodiacSignsGroup));
-  console.log('[DEBUG] Setting up Orbits Custom Tab...');
   createCustomTab('orbits', 'Orbits', '💫', (container) =>
     setupOrbitsControlsCustom(container, orbitGroup, planets, relativeOrbitGroup)
   );
-  console.log('[DEBUG] Orbits Custom Tab Setup Initiated.');
-  // createGuiTab('orbits', 'Orbits', (g) => setupOrbitsControls(g, orbitGroup, planets, relativeOrbitGroup));
   createCustomTab('magnetic', 'Magnetism', '🧲', (container) =>
     setupMagneticFieldsControlsCustom(container, magneticFieldsGroup, planets, universeGroup)
   );

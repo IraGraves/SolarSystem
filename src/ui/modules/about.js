@@ -1,3 +1,11 @@
+/**
+ * @file about.js
+ * @description About section displaying project branding and GitHub repository link.
+ *
+ * This small module creates an About folder in the main menu with the White Rabbit logo and
+ * a link to the project's GitHub repository for user reference and contribution access.
+ */
+
 export function setupAboutFolder(gui) {
   const aboutFolder = gui.addFolder('About');
   const aboutDiv = document.createElement('div');

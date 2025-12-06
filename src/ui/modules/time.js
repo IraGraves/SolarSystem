@@ -1,3 +1,24 @@
+/**
+ * @file time.js
+ * @description Time & Speed window with speedometer for simulation time control.
+ *
+ * This file implements the floating Time & Speed window featuring an interactive speedometer dial
+ * and playback controls. Users can adjust simulation speed logarithmically from 10^0 to 10^10 times
+ * realtime (both forward and reverse), pause, and set specific dates via a modal picker.
+ *
+ * Key features:
+ * - Circular speedometer: Visual needle rotates ±90° mapped to 10^0 to 10^10 speed
+ * - Drag interaction: Click-and-drag on speedometer to set speed dynamically
+ * - Paused attractor zone: ±1° dead zone at center for easy pause selection
+ * - Speed capping: Maximum ±10 billion (10^10) to prevent instability
+ * - Playback controls: Rewind (<<), Reverse (<), Pause (||), Play (>), Forward (>>)
+ * - Date picker modal: Click date display to open datetime-local input
+ * - Auto-pause on date change: Prevents unexpected jumps in time
+ * - Smart formatting: Displays speeds as "5x", "1.5m", "10b" with appropriate units
+ *
+ * The speedometer uses a cubic mapping (exponent 0-10) for smooth control across vast speed ranges.
+ * Button states highlight the active playback mode (pause/play/reverse).
+ */
 import { windowManager } from '../WindowManager.js';
 
 export function setupTimeFolder(_gui, uiState, config) {

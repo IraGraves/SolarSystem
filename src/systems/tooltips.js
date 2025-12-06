@@ -1,3 +1,38 @@
+/**
+ * @file tooltips.js
+ * @description Interactive tooltip system with multi-mode object detection for celestial bodies, stars, and constellations.
+ *
+ * This file implements a sophisticated tooltip/info window system that displays detailed information about
+ * objects when hovered. It supports three modes (tooltip, window, off) and uses multiple detection strategies
+ * for accurate hit testing across vastly different object scales.
+ *
+ * Detection strategies:
+ * 1. **3D Raycasting**: Primary method for planets, sun, moons using Three.js raycaster
+ * 2. **Screen-space fallback**: 20px radius generous hit for small/distant objects
+ * 3. **Octree-accelerated**: Efficient star queries using spatial indexing (500 AU threshold)
+ * 4. **Constellation line segments**: Screen-space distance to line segments (10px radius)
+ *
+ * Tooltip content types:
+ * - **Sun**: Physical properties, temperature, age, realtime distance/light time
+ * - **Planets**: Full details (radius, mass, orbital elements, atmospherepressure, temperature) + live data (true anomaly, velocity, distance)
+ * - **Moons**: Orbital period and basic info
+ * - **Stars**: Distance (light years), spectral type, luminosity, catalog ID
+ * - **Constellations**: Name and zodiac status
+ *
+ * Live data calculations:
+ * - True anomaly from state vectors and eccentricity vector
+ * - Helicentric velocity via finite difference (±1 minute)
+ * - Distance to Earth in AU
+ * - Light travel time in minutes
+ *
+ * Smart formatting:
+ * - Numbers ≥1000: No decimals
+ * - Numbers ≥10: 1 decimal
+ * - Numbers <10: Up to 3 decimals
+ *
+ * The system intelligently chooses between tooltip and window modes based on config, handles
+ * edge-of-screen positioning, and provides detailed scientific data for educational purposes.
+ */
 import * as Astronomy from 'astronomy-engine';
 import * as THREE from 'three';
 import { config } from '../config.js';
