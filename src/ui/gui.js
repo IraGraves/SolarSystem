@@ -53,7 +53,7 @@ export function setupGUI(
   orbitGroup,
   relativeOrbitGroup,
   zodiacGroup,
-  constellationsGroup,
+  asterismsGroup,
   starsRef,
   renderer,
   camera,
@@ -153,8 +153,8 @@ export function setupGUI(
   createCustomTab('objects', 'Bodies', '🪐', (container) =>
     setupObjectsControlsCustom(container, planets, sun)
   );
-  createCustomTab('constellations', 'Asterisms', '✨', (container) =>
-    setupAsterismsControlsCustom(container, zodiacGroup, constellationsGroup, zodiacSignsGroup)
+  createCustomTab('asterisms', 'Asterisms', '✨', (container) =>
+    setupAsterismsControlsCustom(container, zodiacGroup, asterismsGroup, zodiacSignsGroup)
   );
   createCustomTab('orbits', 'Orbits', '💫', (container) =>
     setupOrbitsControlsCustom(container, orbitGroup, planets, relativeOrbitGroup)

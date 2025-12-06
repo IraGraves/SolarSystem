@@ -203,9 +203,9 @@ export function updateAxesVisibility(val, sun, planets) {
   });
 }
 
-export function updateConstellationsVisibility(zodiacGroup, constellationsGroup) {
+export function updateAsterismsVisibility(zodiacGroup, asterismsGroup) {
   const showZ = config.showZodiacs;
-  const showC = config.showConstellations;
+  const showC = config.showAsterisms;
 
   // Zodiac Group Visibility: Visible if either switch is ON
   if (zodiacGroup) {
@@ -222,9 +222,9 @@ export function updateConstellationsVisibility(zodiacGroup, constellationsGroup)
     });
   }
 
-  // Other Constellations Visibility: Only if Constellations switch is ON
-  if (constellationsGroup) {
-    constellationsGroup.visible = showC;
+  // Other Asterisms Visibility: Only if Asterisms switch is ON
+  if (asterismsGroup) {
+    asterismsGroup.visible = showC;
   }
 }
 
@@ -305,24 +305,24 @@ export function updateMagneticFieldScales(planets) {
   });
 }
 
-export function setupConstellationsControls(
+export function setupAsterismsControls(
   gui,
   zodiacGroup,
-  constellationsGroup,
+  asterismsGroup,
   zodiacSignsGroup
 ) {
-  // Constellations (All 88)
-  const constellationsCtrl = gui
-    .add(config, 'showConstellations')
+  // Asterisms (All)
+  const asterismsCtrl = gui
+    .add(config, 'showAsterisms')
     .name('Asterisms (All)')
-    .onChange(() => updateConstellationsVisibility(zodiacGroup, constellationsGroup));
-  constellationsCtrl.domElement.classList.add('checkbox-left');
+    .onChange(() => updateAsterismsVisibility(zodiacGroup, asterismsGroup));
+  asterismsCtrl.domElement.classList.add('checkbox-left');
 
   // Zodiacs
   const zodiacsCtrl = gui
     .add(config, 'showZodiacs')
     .name('Zodiacs')
-    .onChange(() => updateConstellationsVisibility(zodiacGroup, constellationsGroup));
+    .onChange(() => updateAsterismsVisibility(zodiacGroup, asterismsGroup));
   zodiacsCtrl.domElement.classList.add('checkbox-left');
 
   // Zodiac Signs
@@ -486,7 +486,7 @@ export function setupOverlaysFolder(
   gui,
   orbitGroup,
   zodiacGroup,
-  constellationsGroup,
+  asterismsGroup,
   planets,
   sun,
   zodiacSignsGroup,
@@ -497,15 +497,15 @@ export function setupOverlaysFolder(
 ) {
   const overlaysFolder = gui.addFolder('Overlays');
 
-  const constellationsFolder = overlaysFolder.addFolder('Asterisms');
-  constellationsFolder.domElement.classList.add('constellations-folder');
-  setupConstellationsControls(
-    constellationsFolder,
+  const asterismsFolder = overlaysFolder.addFolder('Asterisms');
+  asterismsFolder.domElement.classList.add('constellations-folder');
+  setupAsterismsControls(
+    asterismsFolder,
     zodiacGroup,
-    constellationsGroup,
+    asterismsGroup,
     zodiacSignsGroup
   );
-  constellationsFolder.close();
+  asterismsFolder.close();
 
   const orbitsFolder = overlaysFolder.addFolder('Orbits');
   orbitsFolder.domElement.classList.add('orbits-folder');

@@ -144,21 +144,16 @@ function estimatePhysics(spect) {
 }
 
 // Helper: B-V to RGB
+// Helper: B-V to RGB
 function bvToRGB(bv) {
-  let t;
-  let r = 0,
-    g = 0,
-    b = 0;
   if (Number.isNaN(bv)) bv = 0.65;
   if (bv < -0.4) bv = -0.4;
   if (bv > 2.0) bv = 2.0;
 
-  // Enhanced B-V to RGB with higher saturation for "Gaia Sky" look
-  function bvToRGB(bv) {
-    let r = 0,
-      g = 0,
-      b = 0;
-    let t = 0;
+  let r = 0,
+    g = 0,
+    b = 0;
+  let t = 0;
 
     // Hot Blue/White (O, B, A) - BV < 0.4
     if (bv < 0.4) {
@@ -182,7 +177,6 @@ function bvToRGB(bv) {
       b = 0.6 - 0.6 * t; // Kill Blue
     }
     return { r, g, b };
-  }
 }
 
 // Main
@@ -200,21 +194,21 @@ async function generate() {
     const rows = parseCSV(CSV_FILE);
     console.log(`Total HYG Stars: ${rows.length}`);
 
-    // 1. Identify Constellation Stars (Chunk 0 forced)
-    const constLinesPath = path.join(ASSETS_DIR, 'constellations_lines_all.json');
-    if (!fs.existsSync(constLinesPath)) {
-      throw new Error('Constellation lines file not found!');
+    // 1. Identify Asterism Stars (Chunk 0 forced)
+    const asterismLinesPath = path.join(ASSETS_DIR, 'asterisms_lines_all.json');
+    if (!fs.existsSync(asterismLinesPath)) {
+      throw new Error('Asterism lines file not found!');
     }
-    const constData = JSON.parse(fs.readFileSync(constLinesPath, 'utf8'));
+    const asterismData = JSON.parse(fs.readFileSync(asterismLinesPath, 'utf8'));
     const requiredIDs = new Set();
 
-    // traverse all constellations
-    Object.values(constData).forEach((lines) => {
+    // traverse all asterisms
+    Object.values(asterismData).forEach((lines) => {
       lines.forEach((segment) => {
         segment.forEach((id) => requiredIDs.add(id));
       });
     });
-    console.log(`Constellation stars required: ${requiredIDs.size}`);
+    console.log(`Asterism stars required: ${requiredIDs.size}`);
 
     // Map HR numbers/IDs to check existence
     // HYG 'hr' column is the HR number (Harvard Revised).
@@ -254,16 +248,33 @@ async function generate() {
 
     rows.forEach((row) => {
       if (!row.id) return;
-
+      
       const mag = parseFloat(row.mag);
-      if (mag < -26.0) return; // Filter out Sun
-      if (mag > 10.0) return; // Hard cutoff for file size
 
       // IDs
-      const hr = row.hr ? parseInt(row.hr) : null;
+      let hr = row.hr ? parseInt(row.hr) : null;
       const hip = row.hip ? parseInt(row.hip) : null;
       const hd = row.hd ? parseInt(row.hd) : null;
       const hygId = parseInt(row.id);
+
+
+
+      if (mag < -26.0) return; // Filter out Sun
+      if (mag > 10.0) return; // Hard cutoff for file size
+
+      // Patch missing or mismatched HR numbers for specific stars required by constellations
+      const HR_MISSING_PATCH = {
+          111365: 8559, // Kappa Aquarii
+          8832: 545,    // Gamma1 Arietis (HYG has 546)
+          71795: 5478,  // Kappa2 Bootis (HYG has 5477)
+          8964: 596,    // Xi2 Ceti
+          36848: 2949   // k1 Puppis (HYG has 2916)
+      };
+
+      if (hip && HR_MISSING_PATCH[hip]) {
+          hr = HR_MISSING_PATCH[hip];
+          // Logger.log(`Patched HR ${hr} for HIP ${hip}`);
+      }
 
       // Logic to determine "Our ID"
       // If it looks like an HR star, use HR ID.
@@ -351,7 +362,6 @@ async function generate() {
     allProcessed.sort((a, b) => a.mag - b.mag);
 
     // 4. Assign Chunks
-    // We create separate lists for each chunk
     const chunks = [[], [], []];
 
     // Single pass to maintain sort order
@@ -370,6 +380,20 @@ async function generate() {
         }
       }
     });
+
+    // Check for missing required stars
+    const foundIDs = new Set();
+    allProcessed.forEach(s => {
+        if (s.isRequired) foundIDs.add(s.id);
+    });
+
+    const missingIDs = [...requiredIDs].filter(id => !foundIDs.has(id));
+    if (missingIDs.length > 0) {
+        console.warn(`WARNING: ${missingIDs.length} asterism stars were NOT found in the source data!`);
+        console.warn(`Missing IDs: ${missingIDs.join(', ')}`);
+    } else {
+        console.log('SUCCESS: All asterism stars found.');
+    }
 
     // 5. Write Output Files
     const STRIDE = 11; // 11 floats per star

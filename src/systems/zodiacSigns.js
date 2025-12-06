@@ -104,9 +104,9 @@ export async function alignZodiacSigns(zodiacSignsGroup, starsData) {
       if (star.x != null && star.y != null && star.z != null && star.id != null) {
         // Apply correct coordinate transformation: (z, x, y)
         starPositionMap[star.id] = new THREE.Vector3(
-          star.z * SCALE,
           star.x * SCALE,
-          star.y * SCALE
+          star.z * SCALE,
+          -star.y * SCALE
         );
       }
     });

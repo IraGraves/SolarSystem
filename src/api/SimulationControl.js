@@ -3,7 +3,7 @@ import { config } from '../config.js';
 import { exitFocusMode, focusOnObject } from '../features/focusMode.js';
 import {
   updateAxesVisibility,
-  updateConstellationsVisibility,
+  updateAsterismsVisibility,
   updateDwarfVisibility,
   updateHabitableZoneVisibility,
   updateMagneticFieldsVisibility,
@@ -27,7 +27,7 @@ export class SimulationControl {
     sun,
     orbitGroup,
     zodiacGroup,
-    constellationsGroup,
+    asterismsGroup,
     starsRef,
     camera,
     controls,
@@ -40,7 +40,7 @@ export class SimulationControl {
     this.sun = sun;
     this.orbitGroup = orbitGroup;
     this.zodiacGroup = zodiacGroup;
-    this.constellationsGroup = constellationsGroup;
+    this.asterismsGroup = asterismsGroup;
     this.starsRef = starsRef;
     this.camera = camera;
     this.controls = controls;
@@ -160,12 +160,12 @@ export class SimulationControl {
 
   toggleZodiacs(visible) {
     config.showZodiacs = visible;
-    updateConstellationsVisibility(this.zodiacGroup, this.constellationsGroup);
+    updateAsterismsVisibility(this.zodiacGroup, this.asterismsGroup);
   }
 
-  toggleConstellations(visible) {
-    config.showConstellations = visible;
-    updateConstellationsVisibility(this.zodiacGroup, this.constellationsGroup);
+  toggleAsterisms(visible) {
+    config.showAsterisms = visible;
+    updateAsterismsVisibility(this.zodiacGroup, this.asterismsGroup);
   }
 
   toggleZodiacSigns(visible) {

@@ -38,7 +38,7 @@ import { setupGUI, updateUI } from '../ui/gui.js';
 import { Logger } from '../utils/logger.js';
 import { createPlanets, updatePlanets } from './planets.js';
 import { createScene } from './scene.js';
-import { createConstellations, createStarfield } from './stars.js';
+import { createAsterisms, createStarfield } from './stars.js';
 
 export class Simulation {
   constructor() {
@@ -93,9 +93,9 @@ export class Simulation {
       this.universeGroup.add(orbitGroup);
       this.universeGroup.add(zodiacGroup);
 
-      const constellationsGroup = new THREE.Group();
-      this.universeGroup.add(constellationsGroup);
-      constellationsGroup.visible = config.showConstellations;
+      const asterismsGroup = new THREE.Group();
+      this.universeGroup.add(asterismsGroup);
+      asterismsGroup.visible = config.showAsterisms;
 
       zodiacGroup.visible = config.showZodiacs;
 
@@ -127,7 +127,7 @@ export class Simulation {
         orbitGroup,
         this.relativeOrbitGroup,
         zodiacGroup,
-        constellationsGroup,
+        asterismsGroup,
         this.starsRef,
         renderer,
         camera,
@@ -138,7 +138,7 @@ export class Simulation {
         this.universeGroup
       );
 
-      setupTooltipSystem(camera, planets, sun, this.starsRef, zodiacGroup, constellationsGroup);
+      setupTooltipSystem(camera, planets, sun, this.starsRef, zodiacGroup, asterismsGroup);
       setupFocusMode(camera, controls, planets, sun);
       initializeMissions(this.universeGroup);
       window.updateMissions = updateMissions;
@@ -152,7 +152,7 @@ export class Simulation {
         sun,
         orbitGroup,
         zodiacGroup,
-        constellationsGroup,
+        asterismsGroup,
         this.starsRef,
         camera,
         controls,

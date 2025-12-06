@@ -159,11 +159,10 @@ class StarManager {
 
         const [id, name, bayer, flam, hip, hd, spect] = metaData[i];
 
-        // Coordinate swizzle: x->z, y->x, z->y to match Three.js (Y-up) vs Celestial (Z-up?)
-        // Previous code: x=zRaw, y=xRaw, z=yRaw.
-        const x = zRaw * SCALE;
-        const y = xRaw * SCALE;
-        const z = yRaw * SCALE;
+        // Coordinate align: x->x, y->z, z->-y to match Planets (Y-up is North)
+        const x = xRaw * SCALE;
+        const y = zRaw * SCALE;
+        const z = -yRaw * SCALE;
 
         positions.push(x, y, z);
         colors.push(r, g, b);
@@ -172,6 +171,11 @@ class StarManager {
           console.warn(
             `[DEBUG Chunk ${chunkId}] First Star Pos: ${x}, ${y}, ${z} | RGB: ${r}, ${g}, ${b}`
           );
+        }
+        
+        // Debug Polaris Position (HIP 11767)
+        if (hip === 11767) {
+             console.warn(`[DEBUG] Polaris Found! Raw(x,y,z): [${xRaw}, ${yRaw}, ${zRaw}]. Scene(x,y,z): [${x}, ${y}, ${z}]`);
         }
 
         chunkData.push({
@@ -266,9 +270,9 @@ class StarManager {
     const SCALE = 10000;
 
     data.forEach((star) => {
-      const x = star.z * SCALE;
-      const y = star.x * SCALE;
-      const z = star.y * SCALE;
+      const x = star.x * SCALE;
+      const y = star.z * SCALE;
+      const z = -star.y * SCALE;
       min.min(new THREE.Vector3(x, y, z));
       max.max(new THREE.Vector3(x, y, z));
     });
@@ -278,9 +282,9 @@ class StarManager {
 
     const octree = new Octree(new THREE.Box3(min, max), 64);
     data.forEach((star, i) => {
-      const x = star.z * SCALE;
-      const y = star.x * SCALE;
-      const z = star.y * SCALE;
+      const x = star.x * SCALE;
+      const y = star.z * SCALE;
+      const z = -star.y * SCALE;
       octree.insert({ position: new THREE.Vector3(x, y, z), data: star, index: i });
     });
     return octree;
@@ -424,14 +428,14 @@ export async function createStarfield(scene) {
   };
 }
 
-export async function createConstellations(zodiacGroup, constellationsGroup, starsData) {
+export async function createAsterisms(zodiacGroup, asterismsGroup, starsData) {
   // Note: starsData might only be Chunk 0 at start.
-  // Constellation lines rely on stars being present in provided starsData.
-  // Our chunking logic FORCED all constellation stars into Chunk 0, so this is safe.
+  // Asterism lines rely on stars being present in provided starsData.
+  // Our chunking logic FORCED all asterism stars into Chunk 0, so this is safe.
 
   try {
-    const response = await fetch(`${import.meta.env.BASE_URL}assets/constellations_lines_all.json`);
-    const allConstellations = await response.json();
+    const response = await fetch(`${import.meta.env.BASE_URL}assets/asterisms_lines_all.json`);
+    const allAsterisms = await response.json();
 
     // Map ID -> Position
     const SCALE = 10000;
@@ -439,9 +443,9 @@ export async function createConstellations(zodiacGroup, constellationsGroup, sta
 
     // Loop through whatever data we have (Chunk 0 usually)
     starsData.forEach((star) => {
-      const x = star.z * SCALE;
-      const y = star.x * SCALE;
-      const z = star.y * SCALE;
+      const x = star.x * SCALE;
+      const y = star.z * SCALE;
+      const z = -star.y * SCALE;
       starPositionMap.set(star.id, new THREE.Vector3(x, y, z));
     });
 
@@ -461,9 +465,9 @@ export async function createConstellations(zodiacGroup, constellationsGroup, sta
     let zodiacCount = 0;
     let otherCount = 0;
 
-    for (const [constellationId, lineStrips] of Object.entries(allConstellations)) {
-      const isZodiac = ZODIAC_IDS.includes(constellationId);
-      const targetGroup = isZodiac ? zodiacGroup : constellationsGroup;
+    for (const [asterismId, lineStrips] of Object.entries(allAsterisms)) {
+      const isZodiac = ZODIAC_IDS.includes(asterismId);
+      const targetGroup = isZodiac ? zodiacGroup : asterismsGroup;
       const material = isZodiac ? zodiacMaterial : starMaterial;
 
       for (const starIds of lineStrips) {
@@ -478,15 +482,15 @@ export async function createConstellations(zodiacGroup, constellationsGroup, sta
         if (!missing && points.length >= 2) {
           const geometry = new THREE.BufferGeometry().setFromPoints(points);
           const line = new THREE.Line(geometry, material);
-          line.userData = { type: 'constellation', id: constellationId };
+          line.userData = { type: 'asterism', id: asterismId };
           targetGroup.add(line);
         }
       }
       if (isZodiac) zodiacCount++;
       else otherCount++;
     }
-    Logger.log(`Created ${zodiacCount} zodiacs and ${otherCount} other constellations.`);
+    Logger.log(`Created ${zodiacCount} zodiacs and ${otherCount} other asterisms.`);
   } catch (err) {
-    Logger.error('Error creating constellations', err);
+    Logger.error('Error creating asterisms', err);
   }
 }

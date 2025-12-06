@@ -57,7 +57,7 @@ export function setupTooltipSystem(
   sun,
   starsRef,
   zodiacGroup,
-  constellationsGroup
+  asterismsGroup
 ) {
   const tooltip = document.getElementById('tooltip');
 
@@ -202,7 +202,7 @@ export function setupTooltipSystem(
             starPos = candidate.position.clone();
           } else {
             const SCALE = 10000;
-            starPos = new THREE.Vector3(star.z * SCALE, star.x * SCALE, star.y * SCALE);
+            starPos = new THREE.Vector3(star.x * SCALE, star.z * SCALE, -star.y * SCALE);
           }
 
           starPos.applyMatrix4(starsGroup.matrixWorld);
@@ -229,7 +229,7 @@ export function setupTooltipSystem(
     if (!closestObject) {
       const groupsToCheck = [];
       if (zodiacGroup?.visible) groupsToCheck.push(zodiacGroup);
-      if (constellationsGroup?.visible) groupsToCheck.push(constellationsGroup);
+      if (asterismsGroup?.visible) groupsToCheck.push(asterismsGroup);
 
       let minLineDist = SCREEN_HIT_RADIUS; // Use same radius
 
@@ -270,7 +270,7 @@ export function setupTooltipSystem(
 
             if (dist < minLineDist * minLineDist) {
               minLineDist = Math.sqrt(dist);
-              closestObject = { type: 'constellation', data: line.userData };
+              closestObject = { type: 'asterism', data: line.userData };
             }
           }
         });
@@ -334,7 +334,7 @@ export function setupTooltipSystem(
         else if (closestObject.type === 'sun') title = 'Sun';
         else if (closestObject.type === 'star')
           title = closestObject.data.name || `HD ${closestObject.data.id}`;
-        else if (closestObject.type === 'constellation') title = closestObject.data.id;
+        else if (closestObject.type === 'asterism') title = closestObject.data.id;
 
         infoWindowObj.header.querySelector('.window-title').textContent = title;
       }
@@ -366,8 +366,8 @@ export function setupTooltipSystem(
  * Helper to map mesh back to data object
  */
 function getObjectData(mesh, planets, sun) {
-  if (mesh.userData && mesh.userData.type === 'constellation') {
-    return { type: 'constellation', data: mesh.userData };
+  if (mesh.userData && mesh.userData.type === 'asterism') {
+    return { type: 'asterism', data: mesh.userData };
   }
 
   if (mesh === sun || mesh.parent === sun) {
@@ -823,7 +823,13 @@ function formatMoonTooltip(data, parentName) {
 function formatStarTooltip(data) {
   const distance = data.distance ? (data.distance * 3.26156).toFixed(1) : 'N/A';
   const luminosity = data.luminosity ? data.luminosity.toFixed(2) : 'N/A';
-  const name = data.name || `HD ${data.id}`;
+  
+  let name = data.name;
+  if (!name) {
+    if (data.hd) name = `HD ${data.hd}`;
+    else if (data.hip) name = `HIP ${data.hip}`;
+    else name = `HR ${data.id}`;
+  }
   
   // Use explicit spectral type if available, else derive? (Data now has it)
   const type = data.spectralType || 'Unknown';
@@ -836,10 +842,6 @@ function formatStarTooltip(data) {
 
   if (data.temperature) {
      fields.push({ label: 'Temp', value: `${Math.round(data.temperature)} K` });
-  }
-
-  if (data.mass) {
-      fields.push({ label: 'Mass', value: `${data.mass.toFixed(2)} M☉` });
   }
 
   if (data.mass) {
